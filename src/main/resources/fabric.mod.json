@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "voxelshapeutils",
+	"version": "${version}",
+	"name": "VoxelShapeUtils",
+	"description": "Simply adds some useful tools for combining, rotating, and creating voxel shapes!",
+	"authors": [
+		"Mystery2099"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/voxelshapeutils/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "com.github.mystery2099.voxelshapeutils.VoxelShapeUtils",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.14.23",
+		"minecraft": "~1.19.4",
+		"java": ">=17",
+		"fabric-api": "*",
+		"fabric-language-kotlin": ">=1.9.10"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
