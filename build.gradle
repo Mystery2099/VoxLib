@@ -56,11 +56,11 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
+	it.options.release.set(17)
 }
 
 tasks.withType(KotlinCompile).configureEach {
-	kotlinOptions {
+	it.kotlinOptions {
 		jvmTarget = 17
 	}
 }
