@@ -1,10 +1,27 @@
 package com.github.mystery2099.voxelshapeutils.combination
 
+import net.minecraft.block.Block
 import net.minecraft.util.function.BooleanBiFunction
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 
-object VoxelShapeCombining {
+object VoxelAssembly {
+
+    fun createCuboidShape(
+        minX: Number,
+        minY: Number,
+        minZ: Number,
+        maxX: Number,
+        maxY: Number,
+        maxZ: Number
+    ): VoxelShape = Block.createCuboidShape(
+        minX.toDouble(),
+        minY.toDouble(),
+        minZ.toDouble(),
+        maxX.toDouble(),
+        maxY.toDouble(),
+        maxZ.toDouble()
+    )
 
     /**
      * Combines 2 VoxelShapes together and returns the new shape.

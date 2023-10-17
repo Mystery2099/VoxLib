@@ -1,13 +1,13 @@
 package com.github.mystery2099.voxelshapeutils.rotation
 
-import com.github.mystery2099.voxelshapeutils.combination.VoxelShapeCombining.plus
+import com.github.mystery2099.voxelshapeutils.combination.VoxelAssembly.plus
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 import kotlin.math.min
 
-object Rotation {
+object VoxelRotation {
     fun VoxelShape.rotateLeft(): VoxelShape = this.rotate(VoxelShapeTransformation.ROTATE_LEFT)
     fun VoxelShape.flip(): VoxelShape = this.rotate(VoxelShapeTransformation.FLIP_HORIZONTAL)
     fun VoxelShape.rotateRight(): VoxelShape = this.rotate(VoxelShapeTransformation.ROTATE_RIGHT)
@@ -21,7 +21,7 @@ object Rotation {
         return result.get()
     }
 
-    infix fun limitHorizontal(source: VoxelShape): VoxelShape {
+    fun limitHorizontal(source: VoxelShape): VoxelShape {
         val result = AtomicReference(VoxelShapes.empty())
         source.forEachBox { minX: Double, minY: Double, minZ: Double, maxX: Double, maxY: Double, maxZ: Double ->
             val shape = VoxelShapes.cuboid(minX.limit(), minY, minZ.limit(), maxX.limit(), maxY, maxZ.limit())

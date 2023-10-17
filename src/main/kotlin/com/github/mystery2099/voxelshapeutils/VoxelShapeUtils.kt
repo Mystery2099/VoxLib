@@ -14,19 +14,4 @@ object VoxelShapeUtils : ModInitializer {
 		// Proceed with mild caution.
 		logger.info("Hello Fabric world, this is VoxelShapeUtils!")
 	}
-	fun createCuboidShape(
-		minX: Number,
-		minY: Number,
-		minZ: Number,
-		maxX: Number,
-		maxY: Number,
-		maxZ: Number
-	): VoxelShape = Block.createCuboidShape(
-		minX.toDouble(),
-		minY.toDouble(),
-		minZ.toDouble(),
-		maxX.toDouble(),
-		maxY.toDouble(),
-		maxZ.toDouble()
-	)
 }
