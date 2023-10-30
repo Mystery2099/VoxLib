@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 1,
-	"id": "voxelshapeutils",
+	"id": "voxlib",
 	"version": "${version}",
-	"name": "VoxelShapeUtils",
-	"description": "Simply adds some useful tools for combining, rotating, and creating voxel shapes!",
+	"name": "Mystery2099's VoxLib",
+	"description": "Simply adds some useful tools for combining, rotating, and creating voxel shapes to be used in Minecraft mods!",
 	"authors": [
 		"Mystery2099"
 	],
@@ -13,12 +13,12 @@
 		"issues": "https://github.com/Mystery2099/VoxelShapeUtils/issues"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/voxelshapeutils/icon.png",
+	"icon": "assets/voxlib/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
 			{
-				"value": "com.github.mystery2099.voxelshapeutils.VoxelShapeUtils",
+				"value": "com.github.mystery2099.voxlib.VoxLib",
 				"adapter": "kotlin"
 			}
 		]

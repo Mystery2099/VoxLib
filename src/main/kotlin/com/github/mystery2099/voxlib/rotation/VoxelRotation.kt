@@ -1,6 +1,6 @@
-package com.github.mystery2099.voxelshapeutils.rotation
+package com.github.mystery2099.voxlib.rotation
 
-import com.github.mystery2099.voxelshapeutils.combination.VoxelAssembly.plus
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 import java.util.concurrent.atomic.AtomicReference

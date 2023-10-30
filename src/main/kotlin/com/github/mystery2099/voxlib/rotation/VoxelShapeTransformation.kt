@@ -1,4 +1,4 @@
-package com.github.mystery2099.voxelshapeutils.rotation
+package com.github.mystery2099.voxlib.rotation
 
 /**
  * Voxel shape transformation

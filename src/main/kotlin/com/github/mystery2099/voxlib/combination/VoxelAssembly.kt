@@ -1,4 +1,4 @@
-package com.github.mystery2099.voxelshapeutils.combination
+package com.github.mystery2099.voxlib.combination
 
 import net.minecraft.block.Block
 import net.minecraft.util.function.BooleanBiFunction

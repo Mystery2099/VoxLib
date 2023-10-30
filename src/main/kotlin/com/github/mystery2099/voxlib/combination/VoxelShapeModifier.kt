@@ -1,6 +1,6 @@
-package com.github.mystery2099.voxelshapeutils.combination
+package com.github.mystery2099.voxlib.combination
 
-import com.github.mystery2099.voxelshapeutils.combination.VoxelAssembly.plus
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
 import net.minecraft.util.shape.VoxelShape
 
 class VoxelShapeModifier internal constructor(private var baseShape: VoxelShape) {
