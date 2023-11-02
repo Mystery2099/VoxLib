@@ -3,40 +3,57 @@ package com.github.mystery2099.voxlib.rotation
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 
+/**
+ * A utility object for performing rotations and flips on VoxelShapes.
+ * It provides methods to rotate left, rotate right, and flip a VoxelShape.
+ */
 object VoxelRotation {
 
     /**
-     * @return a [VoxelShape] after being rotated left
+     * Rotates the given VoxelShape to the left.
+     *
+     * @return A new VoxelShape after being rotated left.
+     *
      * @see flip
      * @see rotateRight
      * @see rotate
-     * */
+     */
     fun VoxelShape.rotateLeft(): VoxelShape = this.rotate(VoxelShapeTransformation.ROTATE_LEFT)
 
     /**
-     * @return a [VoxelShape] after being flipped
+     * Flips the given VoxelShape horizontally.
+     *
+     * @return A new VoxelShape after being flipped.
+     *
      * @see rotateLeft
      * @see rotateRight
      * @see rotate
-     * */
+     */
     fun VoxelShape.flip(): VoxelShape = this.rotate(VoxelShapeTransformation.FLIP_HORIZONTAL)
 
     /**
-     * @return a [VoxelShape] after being rotated right
+     * Rotates the given VoxelShape to the right.
+     *
+     * @return A new VoxelShape after being rotated right.
+     *
      * @see rotateLeft
      * @see flip
      * @see rotate
-     * */
+     */
     fun VoxelShape.rotateRight(): VoxelShape = this.rotate(VoxelShapeTransformation.ROTATE_RIGHT)
 
     /**
-     * @return a [VoxelShape] after being rotated or flipped using [transformation]
-     * @param transformation
+     * Rotates or flips the given VoxelShape using the specified transformation.
+     *
+     * @param transformation The transformation to apply.
+     *
+     * @return A new VoxelShape after being rotated or flipped.
+     *
      * @see rotateLeft
      * @see rotateRight
      * @see flip
      * @see VoxelShapeTransformation
-     * */
+     */
     private fun VoxelShape.rotate(transformation: VoxelShapeTransformation): VoxelShape {
         val shapes = mutableListOf(VoxelShapes.empty())
         this.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
@@ -50,15 +67,19 @@ object VoxelRotation {
     }
 
     /**
-     * Adjusts values, simulating the rotation
-     * @param direction
-     * @param minX
-     * @param minZ
-     * @param maxX
-     * @param maxZ
+     * Adjusts values based on the given transformation, simulating the rotation or flip.
+     *
+     * @param direction The transformation to apply.
+     * @param minX The minimum X-coordinate.
+     * @param minZ The minimum Z-coordinate.
+     * @param maxX The maximum X-coordinate.
+     * @param maxZ The maximum Z-coordinate.
+     *
+     * @return An array of adjusted values.
+     *
      * @see rotate
      * @see VoxelShapeTransformation
-     * */
+     */
     private fun adjustValues(
         direction: VoxelShapeTransformation,
         minX: Double,

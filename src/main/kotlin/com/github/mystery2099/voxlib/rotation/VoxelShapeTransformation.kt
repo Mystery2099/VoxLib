@@ -1,29 +1,21 @@
 package com.github.mystery2099.voxlib.rotation
 
 /**
- * Voxel shape transformation
- *
- * @constructor Create empty Voxel shape transformation
+ * Enum representing Voxel shape transformations.
  */
 enum class VoxelShapeTransformation {
     /**
-     * Rotate Left
-     *
-     * @constructor Create empty Rotate Left
+     * Rotate the VoxelShape to the left.
      */
     ROTATE_LEFT,
 
     /**
-     * Rotate Right
-     *
-     * @constructor Create empty Rotate Right
+     * Rotate the VoxelShape to the right.
      */
     ROTATE_RIGHT,
 
     /**
-     * Flip Horizontal
-     *
-     * @constructor Create empty Flip Horizontal
+     * Flip the VoxelShape horizontally.
      */
     FLIP_HORIZONTAL
 }
