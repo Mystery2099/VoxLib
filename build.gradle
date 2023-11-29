@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	id 'fabric-loom' version '1.4-SNAPSHOT'
 	id 'maven-publish'
-  id "org.jetbrains.kotlin.jvm" version "1.9.10"
+	id "org.jetbrains.kotlin.jvm" version "1.9.20"
 }
 
 version = project.mod_version
@@ -22,10 +22,8 @@ repositories {
 }
 
 loom {
-    splitEnvironmentSourceSets()
-
 	mods {
-		"voxelshapeutils" {
+		"voxlib" {
 			sourceSet sourceSets.main
 		}
 	}
@@ -41,7 +39,7 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
-	// Uncomment the following line to enable the deprecated Fabric API modules. 
+	// Uncomment the following line to enable the deprecated Fabric API modules.
 	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
@@ -60,9 +58,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.withType(KotlinCompile).configureEach {
-	it.kotlinOptions {
-		jvmTarget = 17
-	}
+	it.kotlinOptions.jvmTarget = 17
 }
 
 java {
@@ -77,15 +73,15 @@ java {
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}"}
+		rename { "${it}_${project.archives_base_name.get()}"}
 	}
 }
 
 // configure the maven publication
 publishing {
 	publications {
-		mavenJava(MavenPublication) {
-			from components.java
+		gpr(MavenPublication) {
+			from(components.java)
 		}
 	}
 
@@ -95,5 +91,15 @@ publishing {
 		// Notice: This block does NOT have the same function as the block in the top level.
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
+		maven {
+			name = "GitHubPackages"
+			url = "https://maven.pkg.github.com/Mystery2099/VoxLib"
+			def propFile = new Properties()
+			propFile.load(new FileInputStream("./gitlogin.properties"))
+			credentials {
+				username = propFile.username
+				password = propFile.token
+			}
+		}
 	}
 }
