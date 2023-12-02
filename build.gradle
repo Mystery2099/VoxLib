@@ -97,13 +97,13 @@ publishing {
 			if (gitCredFile.exists()) {
 				gitCreds.load(new FileInputStream(gitCredFile))
 			}
-			
+
 			name = "GitHubPackages"
 			url = "https://maven.pkg.github.com/Mystery2099/VoxLib"
 
 			credentials {
-				username = System.getenv("USERNAME") ?: gitCreds.username
-				password = System.getenv("GITHUB_TOKEN") ?: gitCreds.token
+				username = gitCreds.username ?: System.getenv("USERNAME")
+				password = gitCreds.token ?: System.getenv("GITHUB_TOKEN")
 			}
 		}
 	}
