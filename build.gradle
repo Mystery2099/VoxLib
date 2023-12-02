@@ -92,24 +92,18 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 		maven {
-			name = "GitHubPackages"
-			url = "https://maven.pkg.github.com/Mystery2099/VoxLib"
-			String actor
-			String token
 			def gitCreds = new Properties()
 			def gitCredFile = new File("./gitlogin.properties")
 			if (gitCredFile.exists()) {
 				gitCreds.load(new FileInputStream(gitCredFile))
-				actor = gitCreds.username
-				token = gitCreds.token
 			}
-			else {
-				actor = "Mystery2099"
-				token = System.getenv("GITHUB_TOKEN")
-			}
+			
+			name = "GitHubPackages"
+			url = "https://maven.pkg.github.com/Mystery2099/VoxLib"
+
 			credentials {
-				username = actor
-				password = token
+				username = System.getenv("USERNAME") ?: gitCreds.username
+				password = System.getenv("GITHUB_TOKEN") ?: gitCreds.token
 			}
 		}
 	}
