@@ -9,7 +9,7 @@
 	],
 	"contact": {
 		"homepage": "https://github.com/Mystery2099",
-		"sources": "https://github.com/Mystery2099/VoxLib",
+		"sources": "https://modrinth.com/mod/voxlib",
 		"issues": "https://github.com/Mystery2099/VoxLib/issues"
 	},
 	"license": "MMPL-1.0.1",
@@ -28,7 +28,7 @@
 		"minecraft": "~1.19.4",
 		"java": ">=17",
 		"fabric-api": "*",
-		"fabric-language-kotlin": ">=1.9.20"
+		"fabric-language-kotlin": ">=1.10.14+kotlin.1.9.20"
 	},
 	"suggests": {
 		"another-mod": "*"
