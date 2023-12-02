@@ -94,11 +94,22 @@ publishing {
 		maven {
 			name = "GitHubPackages"
 			url = "https://maven.pkg.github.com/Mystery2099/VoxLib"
-			def propFile = new Properties()
-			propFile.load(new FileInputStream("./gitlogin.properties"))
+			String actor
+			String token
+			def gitCreds = new Properties()
+			def gitCredFile = new File("./gitlogin.properties")
+			if (gitCredFile.exists()) {
+				gitCreds.load(new FileInputStream(gitCredFile))
+				actor = gitCreds.username
+				token = gitCreds.token
+			}
+			else {
+				actor = "Mystery2099"
+				token = System.getenv("GITHUB_TOKEN")
+			}
 			credentials {
-				username = propFile.username
-				password = propFile.token
+				username = actor
+				password = token
 			}
 		}
 	}

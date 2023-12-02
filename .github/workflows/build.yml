@@ -38,3 +38,5 @@ jobs:
         with:
           name: Artifacts
           path: build/libs/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
