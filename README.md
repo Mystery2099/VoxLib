@@ -157,9 +157,11 @@ val efficientOutline = createOutlineShape(
     thickness = 1
 )
 
-// Control caching for transformations
-val cachedRotation = complexShape.rotateRight(useCache = true) // Default is true
-val uncachedRotation = complexShape.rotateRight(useCache = false) // Skip cache
+// All transformations use caching by default for better performance
+val rotatedShape = complexShape.rotateRight() // Uses cache automatically
+
+// You can also use the VoxelAssembly utilities for optimized shape operations
+val optimizedUnion = union(shape1, shape2, shape3) // Optimized union operation
 ```
 
 ## Documentation
