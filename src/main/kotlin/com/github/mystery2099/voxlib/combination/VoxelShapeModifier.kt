@@ -1,6 +1,8 @@
 package com.github.mystery2099.voxlib.combination
 
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.appendShapes
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.unifyWith
 import net.minecraft.util.shape.VoxelShape
 
 /**
@@ -38,7 +40,7 @@ class VoxelShapeModifier internal constructor(var storedShape: VoxelShape) {
      * @see VoxelAssembly.appendShapes
      * @see VoxelAssembly.appendShapesTo
      * @see VoxelAssembly.plus
-     * @see VoxelAssembly.UnifyWith
+     * @see VoxelAssembly.unifyWith
      * @see VoxelAssembly.union
      * @see VoxelAssembly.combine
      */
