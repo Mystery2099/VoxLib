@@ -12,7 +12,7 @@ A Minecraft Fabric library mod that provides utilities for manipulating, creatin
 - **Combine** shapes using operator overloading (`+`) and conditional assembly
 - **Transform** shapes with rotation and flipping utilities
 - **Simplify** your block collision and outline code
-- **Optimize** performance with shape caching and simplification utilities
+- **Optimize** performance with high-performance caching (using Caffeine) and shape simplification utilities
 - **Debug** shapes with visualization tools
 
 ## Getting Started
@@ -157,8 +157,11 @@ val efficientOutline = createOutlineShape(
     thickness = 1
 )
 
-// All transformations use caching by default for better performance
+// All transformations use Caffeine caching by default for better performance
 val rotatedShape = complexShape.rotateRight() // Uses cache automatically
+
+// Caffeine provides automatic cache eviction and time-based expiration
+// so you don't need to worry about memory leaks
 
 // You can also use the VoxelAssembly utilities for optimized shape operations
 val optimizedUnion = union(shape1, shape2, shape3) // Optimized union operation
