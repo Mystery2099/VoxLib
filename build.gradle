@@ -58,9 +58,12 @@ dependencies {
 
 // Process resources and expand version in fabric.mod.json
 processResources {
-	inputs.property "version", project.version
+	// Capture the version at configuration time
+	def projectVersion = project.version
+
+	inputs.property "version", projectVersion
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version
+		expand "version": projectVersion
 	}
 }
 
