@@ -76,14 +76,14 @@ dependencies {
 }
 
 shadow {
-	// Relocate Caffeine to avoid conflicts with other mods
-	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
-
 	// Minimize the JAR to only include what we use
 	minimize()
 }
 
 shadowJar {
+	// Relocate Caffeine to avoid conflicts with other mods
+	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
+
 	// Make sure the classifier is empty so this becomes the main artifact
 	archiveClassifier.set('')
 
