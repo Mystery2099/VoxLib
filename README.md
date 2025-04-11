@@ -19,9 +19,9 @@ A Minecraft Fabric library mod that provides utilities for manipulating, creatin
 
 ### Installation
 
-There are two ways to add VoxLib as a dependency to your project:
+There are several ways to add VoxLib as a dependency to your project:
 
-#### Option 1: CurseForge Maven (Recommended)
+#### Option 1: CurseForge Maven (Recommended for Minecraft Mods)
 
 Add VoxLib as a dependency using CurseForge Maven in your `build.gradle` file:
 
@@ -44,9 +44,25 @@ Replace:
 
 You can find these IDs on the VoxLib CurseForge page under the "Files" tab.
 
-#### Option 2: GitHub Packages
+#### Option 2: JitPack (Easiest Setup)
 
-Alternatively, you can use GitHub Packages:
+JitPack makes it easy to use any GitHub repository as a dependency:
+
+```gradle
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    modImplementation 'com.github.Mystery2099:VoxLib:TAG'
+}
+```
+
+Replace `TAG` with a version tag like `v1.2.0` or use `master-SNAPSHOT` for the latest development version.
+
+#### Option 3: GitHub Packages
+
+For projects that use GitHub Packages:
 
 ```gradle
 repositories {
@@ -54,21 +70,20 @@ repositories {
         name = "GitHubPackages"
         url = "https://maven.pkg.github.com/Mystery2099/VoxLib"
         credentials {
-            username = USERNAME
-            password = TOKEN
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
         }
     }
 }
 
 dependencies {
-    modImplementation("com.github.mystery2099:voxlib:VERSION")
+    modImplementation "com.github.mystery2099:voxlib:VERSION"
 }
 ```
 
-Replace:
-- `USERNAME` with your GitHub username
-- `TOKEN` with a GitHub token with `read:packages` scope
-- `VERSION` with the version of the mod you want to use (e.g., `1.2.0+1.19.4`)
+You'll need to:
+1. Set `gpr.user` and `gpr.key` in your `~/.gradle/gradle.properties` file, or
+2. Set `GITHUB_ACTOR` and `GITHUB_TOKEN` environment variables
 
 For more information on GitHub Packages, see [Working with a GitHub Packages Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#using-a-published-package)
 

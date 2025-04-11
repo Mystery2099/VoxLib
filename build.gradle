@@ -111,28 +111,61 @@ tasks.test {
 // Maven publication configuration
 publishing {
 	publications {
-		gpr(MavenPublication) {
+		mavenJava(MavenPublication) {
+			// Use the remapped jar as the artifact
 			artifact remapJar
+
+			// Include sources
 			artifact(sourcesJar) {
 				builtBy remapSourcesJar
+			}
+
+			// Add proper Maven coordinates
+			groupId = project.maven_group
+			artifactId = project.archives_base_name
+			version = project.version
+
+			// Add POM information required by Maven Central
+			pom {
+				name = "VoxLib"
+				description = "A Minecraft Fabric library mod that provides utilities for manipulating, creating, and rotating voxel shapes"
+				url = "https://github.com/Mystery2099/VoxLib"
+
+				licenses {
+					license {
+						name = "Minecraft Mod Public License 1.0.1"
+						url = "https://github.com/Mystery2099/VoxLib/blob/master/LICENSE"
+					}
+				}
+
+				developers {
+					developer {
+						id = "Mystery2099"
+						name = "Mystery2099"
+						email = "xxmysteryxxftb@gmail.com"
+					}
+				}
+
+				scm {
+					connection = "scm:git:git://github.com/Mystery2099/VoxLib.git"
+					developerConnection = "scm:git:ssh://github.com:Mystery2099/VoxLib.git"
+					url = "https://github.com/Mystery2099/VoxLib/tree/master"
+				}
 			}
 		}
 	}
 
 	repositories {
+		// GitHub Packages repository
 		maven {
-			def gitCreds = new Properties()
-			def gitCredFile = new File("./gitlogin.properties")
-			if (gitCredFile.exists()) {
-				gitCreds.load(new FileInputStream(gitCredFile))
-			}
-
 			name = "GitHubPackages"
-			url = "https://maven.pkg.github.com/Mystery2099/VoxLib"
+			url = uri("https://maven.pkg.github.com/Mystery2099/VoxLib")
 
 			credentials {
-				username = gitCreds.username ?: System.getenv("USERNAME")
-				password = gitCreds.token ?: System.getenv("GITHUB_TOKEN")
+				// Try environment variables first (for GitHub Actions)
+				// Then project properties (for local development)
+				username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") ?: "username"
+				password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") ?: "token"
 			}
 		}
 	}
