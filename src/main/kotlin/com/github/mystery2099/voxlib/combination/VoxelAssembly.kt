@@ -95,7 +95,7 @@ object VoxelAssembly {
             operationId = "union"
         )
 
-        return ShapeCache.getOrCompute(cacheKey) { _ ->
+        return ShapeCache.getOrCompute(cacheKey) {
             VoxelShapes.union(shape1, shape2)
         }
     }
@@ -159,7 +159,7 @@ object VoxelAssembly {
             parameters = listOf(nonEmptyShapes.size)
         )
 
-        return ShapeCache.getOrCompute(cacheKey) { _ ->
+        return ShapeCache.getOrCompute(cacheKey) {
             optimizedUnion(nonEmptyShapes)
         }
     }

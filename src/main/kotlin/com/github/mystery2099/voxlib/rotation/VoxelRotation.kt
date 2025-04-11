@@ -135,7 +135,7 @@ object VoxelRotation {
             operationId = transformation.name
         )
 
-        return ShapeCache.getOrCompute(cacheKey) { _ ->
+        return ShapeCache.getOrCompute(cacheKey) {
             shape.rotateUncached(transformation)
         }
     }
@@ -164,7 +164,7 @@ object VoxelRotation {
             operationId = transformation.name
         )
 
-        return ShapeCache.getOrCompute(cacheKey) { _ ->
+        return ShapeCache.getOrCompute(cacheKey) {
             shape.rotateVerticalUncached(transformation)
         }
     }

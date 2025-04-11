@@ -17,7 +17,7 @@ object ShapeCache {
     /**
      * Maximum size of the cache to prevent memory leaks
      */
-    private const val MAX_CACHE_SIZE = 500
+    private const val MAX_CACHE_SIZE: Long = 500
 
     /**
      * Caffeine cache with automatic eviction policies
@@ -37,6 +37,18 @@ object ShapeCache {
      */
     fun getOrCompute(key: ShapeCacheKey, computeFunction: Function<ShapeCacheKey, VoxelShape>): VoxelShape {
         return cache.get(key) { k -> computeFunction.apply(k) }
+    }
+
+    /**
+     * Gets a shape from the cache or computes it if not present.
+     * This overload accepts a Kotlin lambda for more idiomatic usage.
+     *
+     * @param key The key to identify the shape in the cache.
+     * @param computeFunction The lambda to compute the shape if not in cache.
+     * @return The cached or newly computed VoxelShape.
+     */
+    fun getOrCompute(key: ShapeCacheKey, computeFunction: () -> VoxelShape): VoxelShape {
+        return cache.get(key) { _ -> computeFunction() }
     }
 
     /**
