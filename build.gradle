@@ -96,21 +96,36 @@ shadowJar {
 }
 
 // Configure tasks for proper Shadow and Loom integration
-tasks.named('shadowJar') {
-	// Configure shadowJar to run before remapJar
-	finalizedBy remapJar
+// We'll use a different approach - let Loom handle the remapping first, then shadow
+
+// Disable the default shadowJar task to avoid conflicts
+shadowJar.enabled = false
+
+// Create a custom task that will shadow the remapped JAR
+task remapShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+	classifier = ''
+	from(remapJar.outputs)
+
+	// Relocate Caffeine to avoid conflicts with other mods
+	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
+
+	// Minimize the JAR to only include what we use
+	minimize()
+
+	// Configure the JAR manifest
+	manifest {
+		attributes(
+			'Implementation-Title': project.name,
+			'Implementation-Version': project.version
+		)
+	}
+
+	// Make sure this runs after remapJar
+	dependsOn remapJar
 }
 
-remapJar {
-	// Make sure shadowJar runs first
-	dependsOn shadowJar
-
-	// Use the shadowJar output as input
-	input = shadowJar.archiveFile
-
-	// Make sure we don't try to remap before shadowJar is done
-	mustRunAfter shadowJar
-}
+// Make the build task depend on our custom remapShadowJar task
+build.dependsOn remapShadowJar
 
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
@@ -132,8 +147,8 @@ jar {
 publishing {
 	publications {
 		gpr(MavenPublication) {
-			// Use the remapped jar as the artifact
-			artifact remapJar
+			// Use our custom remapShadowJar task as the artifact
+			artifact remapShadowJar
 
 			// Include sources and javadoc if available
 			artifact(sourcesJar) {
