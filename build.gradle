@@ -74,6 +74,9 @@ tasks.withType(KotlinCompile).configureEach {
 jar {
 	// Make sure duplicates are handled properly
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	from("LICENSE") {
+		rename { "${it}_${archives_base_name}"}
+	}
 }
 
 // Configure shadowJar task to run before remapJar
@@ -123,14 +126,6 @@ java {
 
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
-}
-
-
-
-jar {
-	from("LICENSE") {
-		rename { "${it}_${archives_base_name}"}
-	}
 }
 
 // configure the maven publication
