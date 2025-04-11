@@ -103,7 +103,7 @@ shadowJar.enabled = false
 
 // Create a custom task that will shadow the remapped JAR
 task remapShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-	classifier = ''
+	archiveClassifier.set('')
 	from(remapJar.outputs)
 
 	// Relocate Caffeine to avoid conflicts with other mods
