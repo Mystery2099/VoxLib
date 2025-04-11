@@ -121,14 +121,18 @@ shadowJar {
 	// Make sure duplicates are handled properly
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-	// Set the classifier to 'all' to avoid conflicts with remapJar
-	archiveClassifier.set('all')
+	// Set the classifier to 'dev' to indicate it's not the final artifact
+	archiveClassifier.set('dev')
+
+	// Make sure this JAR isn't published or included in distributions
+	archiveFile.set(layout.buildDirectory.file("libs/shadow-only/${archiveBaseName.get()}-${archiveVersion.get()}-dev.jar"))
 }
 
 // Configure remapJar to use shadowJar output
 remapJar {
 	dependsOn shadowJar
-	input = shadowJar.archiveFile
+	// Use a provider to get the shadowJar output file at execution time
+	input.set(shadowJar.archiveFile)
 	archiveClassifier.set('')
 }
 
@@ -140,6 +144,12 @@ java {
 
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
+}
+
+// Configure the build task to only depend on remapJar and not shadowJar
+tasks.named('build') {
+	// Make sure we don't include the -all JAR in the build artifacts
+	dependsOn.remove(tasks.named('shadowJar'))
 }
 
 jar {
