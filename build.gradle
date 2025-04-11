@@ -70,11 +70,13 @@ tasks.withType(KotlinCompile).configureEach {
 	it.kotlinOptions.jvmTarget = 17
 }
 
+// Create a resolvable configuration for shadowing
+configurations {
+	shadow.extendsFrom implementation
+}
+
 // Configure Shadow plugin to relocate Caffeine
 shadowJar {
-	// Only include Caffeine in the shadowed JAR
-	configurations = [project.configurations.implementation]
-
 	// Relocate Caffeine to avoid conflicts with other mods
 	relocate 'com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine'
 
