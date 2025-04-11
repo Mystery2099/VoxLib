@@ -4,7 +4,7 @@ plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
 	id "org.jetbrains.kotlin.jvm" version "2.1.20"
-	id("com.gradleup.shadow") version "9.0.0-beta12"
+	id 'io.github.goooler.shadow' version '8.1.7'
 }
 
 version = project.mod_version
@@ -46,7 +46,12 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	// Caffeine dependency is now defined in the shadow configuration below
+	// Caffeine for high-performance caching - will be relocated to avoid conflicts
+	implementation("com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}") {
+		// Exclude transitive dependencies we don't need
+		exclude group: 'org.checkerframework', module: 'checker-qual'
+		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+	}
 }
 
 processResources {
@@ -94,23 +99,18 @@ shadowJar {
 	}
 }
 
-// Let's try a completely different approach - use Loom's built-in support
+// Simple Shadow configuration for Fabric
 
 // Configure the shadowJar task
 shadowJar {
+	// Only include Caffeine in the shadowed JAR
+	configurations = [project.configurations.runtimeClasspath]
+
 	// Relocate Caffeine to avoid conflicts with other mods
 	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
 
 	// Minimize the JAR to only include what we use
 	minimize()
-
-	// Configure the JAR manifest
-	manifest {
-		attributes(
-			'Implementation-Title': project.name,
-			'Implementation-Version': project.version
-		)
-	}
 
 	// Exclude unnecessary files
 	exclude 'META-INF/MANIFEST.MF'
@@ -121,19 +121,14 @@ shadowJar {
 	// Make sure duplicates are handled properly
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-	// Set the classifier to 'dev' to indicate it's not the final artifact
-	archiveClassifier.set('dev')
-
-	// Make sure this JAR isn't published or included in distributions
-	archiveFile.set(layout.buildDirectory.file("libs/shadow-only/${archiveBaseName.get()}-${archiveVersion.get()}-dev.jar"))
+	// Don't add a classifier to the output JAR
+	archiveClassifier.set('')
 }
 
 // Configure remapJar to use shadowJar output
 remapJar {
 	dependsOn shadowJar
-	// Use a provider to get the shadowJar output file at execution time
-	input.set(shadowJar.archiveFile)
-	archiveClassifier.set('')
+	input = shadowJar.archiveFile
 }
 
 java {
@@ -146,10 +141,6 @@ java {
 	targetCompatibility = JavaVersion.VERSION_17
 }
 
-// Configure tasks to ensure clean build outputs
-// Instead of trying to modify the build task, we'll configure shadowJar to not be part of the default build
-shadowJar.group = 'shadow' // Move to a different group
-shadowJar.description = 'Creates a shadowed JAR for internal use only'
 
 
 jar {
