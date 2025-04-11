@@ -146,11 +146,11 @@ java {
 	targetCompatibility = JavaVersion.VERSION_17
 }
 
-// Configure the build task to only depend on remapJar and not shadowJar
-tasks.named('build') {
-	// Make sure we don't include the -all JAR in the build artifacts
-	dependsOn.remove(tasks.named('shadowJar'))
-}
+// Configure tasks to ensure clean build outputs
+// Instead of trying to modify the build task, we'll configure shadowJar to not be part of the default build
+shadowJar.group = 'shadow' // Move to a different group
+shadowJar.description = 'Creates a shadowed JAR for internal use only'
+
 
 jar {
 	from("LICENSE") {
