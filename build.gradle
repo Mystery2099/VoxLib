@@ -70,12 +70,17 @@ tasks.withType(KotlinCompile).configureEach {
 	it.kotlinOptions.jvmTarget = 17
 }
 
-// Shadow configuration is below at line ~100
+// Configure jar task to include relocated Caffeine
+jar {
+	// Make sure duplicates are handled properly
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 
-// Simple Shadow configuration for Fabric
-
-// Configure the shadowJar task
+// Configure shadowJar task to run before remapJar
 shadowJar {
+	// Make shadowJar extend from project jar task
+	from jar
+
 	// Only include Caffeine in the shadowed JAR
 	configurations = [project.configurations.runtimeClasspath]
 
@@ -94,14 +99,20 @@ shadowJar {
 	// Make sure duplicates are handled properly
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-	// Don't add a classifier to the output JAR
-	archiveClassifier.set('')
+	// Use a temporary classifier
+	archiveClassifier.set('dev')
+
+	// Make sure this runs before remapJar
+	finalizedBy remapJar
 }
 
 // Configure remapJar to use shadowJar output
 remapJar {
 	dependsOn shadowJar
 	input = shadowJar.archiveFile
+
+	// Make sure the final JAR has no classifier
+	archiveClassifier.set('')
 }
 
 java {
