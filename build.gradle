@@ -95,10 +95,21 @@ shadowJar {
 	}
 }
 
-// Make the remapJar task depend on shadowJar
+// Configure tasks for proper Shadow and Loom integration
+tasks.named('shadowJar') {
+	// Configure shadowJar to run before remapJar
+	finalizedBy remapJar
+}
+
 remapJar {
+	// Make sure shadowJar runs first
 	dependsOn shadowJar
+
+	// Use the shadowJar output as input
 	input = shadowJar.archiveFile
+
+	// Make sure we don't try to remap before shadowJar is done
+	mustRunAfter shadowJar
 }
 
 java {
@@ -121,7 +132,13 @@ jar {
 publishing {
 	publications {
 		gpr(MavenPublication) {
-			from(components.java)
+			// Use the remapped jar as the artifact
+			artifact remapJar
+
+			// Include sources and javadoc if available
+			artifact(sourcesJar) {
+				builtBy remapSourcesJar
+			}
 		}
 	}
 
