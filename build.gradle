@@ -94,8 +94,7 @@ shadowJar {
 	}
 }
 
-// Configure tasks for proper Shadow and Loom integration
-// Shadow first, then remap - this is the standard approach for Fabric mods
+// Let's try a completely different approach - use Loom's built-in support
 
 // Configure the shadowJar task
 shadowJar {
@@ -113,14 +112,24 @@ shadowJar {
 		)
 	}
 
-	// Make sure this runs before remapJar
-	finalizedBy remapJar
+	// Exclude unnecessary files
+	exclude 'META-INF/MANIFEST.MF'
+	exclude 'META-INF/*.SF'
+	exclude 'META-INF/*.DSA'
+	exclude 'META-INF/*.RSA'
+
+	// Make sure duplicates are handled properly
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	// Set the classifier to 'all' to avoid conflicts with remapJar
+	archiveClassifier.set('all')
 }
 
 // Configure remapJar to use shadowJar output
 remapJar {
 	dependsOn shadowJar
 	input = shadowJar.archiveFile
+	archiveClassifier.set('')
 }
 
 java {
