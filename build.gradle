@@ -70,34 +70,7 @@ tasks.withType(KotlinCompile).configureEach {
 	it.kotlinOptions.jvmTarget = 17
 }
 
-// Configure Shadow plugin to relocate Caffeine
-dependencies {
-	// Add Caffeine as a shadow dependency
-	implementation("com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}") {
-		// Exclude transitive dependencies we don't need
-		exclude group: 'org.checkerframework', module: 'checker-qual'
-		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
-	}
-}
-
-
-shadowJar {
-	// Minimize the JAR to only include what we use
-	minimize()
-	// Relocate Caffeine to avoid conflicts with other mods
-	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
-
-	// Make sure the classifier is empty so this becomes the main artifact
-	archiveClassifier.set('')
-
-	// Configure the JAR manifest
-	manifest {
-		attributes(
-			'Implementation-Title': project.name,
-			'Implementation-Version': project.version
-		)
-	}
-}
+// Shadow configuration is below at line ~100
 
 // Simple Shadow configuration for Fabric
 
