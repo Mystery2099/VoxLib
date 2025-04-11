@@ -103,8 +103,12 @@ shadowJar.enabled = false
 
 // Create a custom task that will shadow the remapped JAR
 task remapShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+	// Set the output file name to match what Fabric expects
+	archiveFileName = "${archivesBaseName}-${version}.jar"
 	archiveClassifier.set('')
-	from(remapJar.outputs)
+
+	// Use zipTree to extract the contents of the remapped JAR
+	from(zipTree(remapJar.archiveFile))
 
 	// Relocate Caffeine to avoid conflicts with other mods
 	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
@@ -117,6 +121,16 @@ task remapShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.Shado
 		attributes(
 			'Implementation-Title': project.name,
 			'Implementation-Version': project.version
+		)
+	}
+
+	// Make sure to include the fabric.mod.json file
+	from("src/main/resources") {
+		include "fabric.mod.json"
+		include "assets/**"
+		include "data/**"
+		expand(
+			"version": project.version
 		)
 	}
 
