@@ -3,13 +3,13 @@
 	"id": "voxlib",
 	"version": "${version}",
 	"name": "Mystery2099's VoxLib",
-	"description": "This mod adds some tools which help modders to more easily manipulate, create, and rotate voxel shapes in their code!",
+	"description": "A library that provides utilities for manipulating, creating, and rotating voxel shapes in Minecraft modding, with performance optimizations and common shape patterns.",
 	"authors": [
 		"Mystery2099"
 	],
 	"contact": {
-		"homepage": "https://github.com/Mystery2099",
-		"sources": "https://modrinth.com/mod/voxlib",
+		"homepage": "https://github.com/Mystery2099/VoxLib",
+		"sources": "https://github.com/Mystery2099/VoxLib",
 		"issues": "https://github.com/Mystery2099/VoxLib/issues"
 	},
 	"license": "MMPL-1.0.1",
@@ -24,18 +24,17 @@
 		]
 	},
 	"depends": {
-		"fabricloader": ">=0.15.7",
+		"fabricloader": ">=0.16.13",
 		"minecraft": "~1.19.4",
 		"java": ">=17",
-		"fabric-api": "*",
-		"fabric-language-kotlin": ">=1.10.19+kotlin.1.9.23"
-	},
-	"suggests": {
-		"another-mod": "*"
+		"fabric-api": ">=0.87.2+1.19.4",
+		"fabric-language-kotlin": ">=1.13.2+kotlin.2.1.20"
 	},
 	"custom": {
 		"modmenu": {
-			"badges": [ "library", "client" ]
+			"badges": [
+				"library"
+			]
 		}
 	}
 }
