@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved union operation with divide-and-conquer algorithm
 - Optimized shape transformation methods
 - Added early returns for special cases to improve performance
+- Updated Gradle to 8.12
+- Updated Fabric Loader to 0.16.13
+- Updated Fabric Language Kotlin to 1.13.2+kotlin.2.1.20
+- Specified minimum Fabric API version as 0.87.2+1.19.4
 
 ## [1.1.0] - 2021-06-10
 
