@@ -46,7 +46,7 @@ dependencies {
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
 	// Caffeine for high-performance caching
-	implementation "com.github.ben-manes.caffeine:caffeine:3.1.8"
+	implementation "com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}"
 }
 
 processResources {
