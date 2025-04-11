@@ -75,12 +75,11 @@ dependencies {
 	})
 }
 
-shadow {
-	// Minimize the JAR to only include what we use
-	minimize()
-}
+// The shadow extension is no longer needed for our configuration
 
 shadowJar {
+	// Minimize the JAR to only include what we use
+	minimize()
 	// Relocate Caffeine to avoid conflicts with other mods
 	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
 
