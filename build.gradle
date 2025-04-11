@@ -4,7 +4,7 @@ plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
 	id "org.jetbrains.kotlin.jvm" version "2.1.20"
-	id 'com.github.johnrengelman.shadow' version '8.1.1'
+	id 'com.github.gradleup.shadow' version '9.0.0-beta12'
 }
 
 version = project.mod_version
@@ -70,21 +70,29 @@ tasks.withType(KotlinCompile).configureEach {
 	it.kotlinOptions.jvmTarget = 17
 }
 
-// Create a resolvable configuration for shadowing
-configurations {
-	shadow.extendsFrom implementation
-}
-
 // Configure Shadow plugin to relocate Caffeine
-shadowJar {
+shadow {
+	// Only include implementation dependencies (Caffeine)
+	include(dependency('com.github.ben-manes.caffeine:caffeine'))
+
 	// Relocate Caffeine to avoid conflicts with other mods
-	relocate 'com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine'
+	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
 
 	// Minimize the JAR to only include what we use
 	minimize()
+}
 
+shadowJar {
 	// Make sure the classifier is empty so this becomes the main artifact
 	archiveClassifier.set('')
+
+	// Configure the JAR manifest
+	manifest {
+		attributes(
+			'Implementation-Title': project.name,
+			'Implementation-Version': project.version
+		)
+	}
 }
 
 // Make the remapJar task depend on shadowJar
