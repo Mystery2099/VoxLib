@@ -4,7 +4,6 @@ plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
 	id "org.jetbrains.kotlin.jvm" version "2.1.20"
-	id 'io.github.goooler.shadow' version '8.1.7'
 }
 
 version = project.mod_version
@@ -15,11 +14,7 @@ base {
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	// Add any custom repositories here if needed
 }
 
 loom {
@@ -29,39 +24,42 @@ loom {
 		}
 	}
 
+	// Configure the include configuration for embedding dependencies
+	configurations {
+		include
+	}
 }
 
-
 dependencies {
-	// To change the versions see the gradle.properties file
+	// Minecraft and Fabric dependencies
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
-	// Uncomment the following line to enable the deprecated Fabric API modules.
-	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
 
-	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
-
-	// Caffeine for high-performance caching - will be relocated to avoid conflicts
+	// Caffeine for high-performance caching
 	implementation("com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}") {
-		// Exclude transitive dependencies we don't need
+		exclude group: 'org.checkerframework', module: 'checker-qual'
+		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+	}
+
+	// Include Caffeine in the final JAR
+	include("com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}") {
 		exclude group: 'org.checkerframework', module: 'checker-qual'
 		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
 	}
 }
 
+// Process resources and expand version in fabric.mod.json
 processResources {
 	inputs.property "version", project.version
-
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
 	}
 }
 
+// Set Java and Kotlin compilation targets
 tasks.withType(JavaCompile).configureEach {
 	it.options.release.set(17)
 }
@@ -70,89 +68,45 @@ tasks.withType(KotlinCompile).configureEach {
 	it.kotlinOptions.jvmTarget = 17
 }
 
-// Configure jar task to include relocated Caffeine
+// Configure jar task
 jar {
-	// Make sure duplicates are handled properly
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	// Include LICENSE file
 	from("LICENSE") {
 		rename { "${it}_${archives_base_name}"}
 	}
+
+	// Add manifest attributes
+	manifest {
+		attributes(
+			'Implementation-Title': project.archives_base_name,
+			'Implementation-Version': project.version,
+			'Implementation-Vendor': 'Mystery2099',
+			'Fabric-Loom-Version': '1.10.5'
+		)
+	}
 }
 
-// Configure shadowJar task to run before remapJar
-shadowJar {
-	// Make shadowJar extend from project jar task
-	from jar
-
-	// Only include Caffeine in the shadowed JAR
-	configurations = [project.configurations.runtimeClasspath]
-
-	// Relocate Caffeine to avoid conflicts with other mods
-	relocate('com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine')
-
-	// Minimize the JAR to only include what we use
-	minimize()
-
-	// Exclude unnecessary files
-	exclude 'META-INF/MANIFEST.MF'
-	exclude 'META-INF/*.SF'
-	exclude 'META-INF/*.DSA'
-	exclude 'META-INF/*.RSA'
-
-	// Make sure duplicates are handled properly
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-	// Use a temporary classifier
-	archiveClassifier.set('dev')
-
-	// Make sure the output file is in the expected location
-	archiveFileName = "${archivesBaseName}-${version}-dev.jar"
-	destinationDirectory = file("${project.buildDir}/libs")
-
-	// Make sure this runs before remapJar
-	finalizedBy remapJar
-}
-
-// Configure remapJar to use shadowJar output
-remapJar {
-	dependsOn shadowJar
-	// Use a provider to get the shadowJar output file at execution time
-	input = file("${project.buildDir}/libs/${archivesBaseName}-${version}-dev.jar")
-
-	// Make sure the final JAR has no classifier
-	archiveClassifier.set('')
-}
-
+// Java configuration
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
 	withSourcesJar()
-
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
 }
 
-// configure the maven publication
+// Maven publication configuration
 publishing {
 	publications {
 		gpr(MavenPublication) {
-			// Use the remapped jar as the artifact
 			artifact remapJar
-
-			// Include sources and javadoc if available
 			artifact(sourcesJar) {
 				builtBy remapSourcesJar
 			}
 		}
 	}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
 	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
 		maven {
 			def gitCreds = new Properties()
 			def gitCredFile = new File("./gitlogin.properties")
