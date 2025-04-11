@@ -15,9 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `rotate(transformation)` - General-purpose method for any transformation
     - Renamed `flip()` to `flipHorizontal()` with backward compatibility
 - Performance optimizations:
-    - Shape caching system for frequently used transformations
+    - High-performance caching using Caffeine library
     - Optimized shape combination algorithms
     - Special case handling for empty and full shapes
+    - Automatic cache eviction with time-based expiration
 - New utility class `CommonShapes` with pre-defined shape generators:
     - Slabs (bottom and top)
     - Pillars

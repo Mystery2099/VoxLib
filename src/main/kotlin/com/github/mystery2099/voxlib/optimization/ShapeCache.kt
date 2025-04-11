@@ -1,7 +1,9 @@
 package com.github.mystery2099.voxlib.optimization
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.Cache
 import net.minecraft.util.shape.VoxelShape
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
 /**
@@ -9,15 +11,22 @@ import java.util.function.Function
  *
  * VoxelShape operations can be expensive, especially when performed frequently.
  * This cache helps reduce the overhead by storing and reusing previously created shapes.
+ * Uses Caffeine caching library for high-performance caching with automatic eviction.
  */
 object ShapeCache {
-    // Thread-safe map for storing shapes
-    private val cache = ConcurrentHashMap<ShapeCacheKey, VoxelShape>()
-
     /**
      * Maximum size of the cache to prevent memory leaks
      */
     private const val MAX_CACHE_SIZE = 500
+
+    /**
+     * Caffeine cache with automatic eviction policies
+     */
+    private val cache: Cache<ShapeCacheKey, VoxelShape> = Caffeine.newBuilder()
+        .maximumSize(MAX_CACHE_SIZE)
+        .expireAfterAccess(10, TimeUnit.MINUTES)
+        .recordStats() // Optional: enables statistics collection
+        .build()
 
     /**
      * Gets a shape from the cache or computes it if not present.
@@ -27,28 +36,14 @@ object ShapeCache {
      * @return The cached or newly computed VoxelShape.
      */
     fun getOrCompute(key: ShapeCacheKey, computeFunction: Function<ShapeCacheKey, VoxelShape>): VoxelShape {
-        // Clean cache if it gets too large
-        if (cache.size > MAX_CACHE_SIZE) {
-            cleanCache()
-        }
-
-        return cache.computeIfAbsent(key, computeFunction)
+        return cache.get(key) { k -> computeFunction.apply(k) }
     }
 
     /**
      * Clears the entire cache.
      */
     fun clearCache() {
-        cache.clear()
-    }
-
-    /**
-     * Removes half of the entries from the cache when it gets too large.
-     * This is a simple strategy to prevent the cache from growing indefinitely.
-     */
-    private fun cleanCache() {
-        val keysToRemove = cache.keys.take(MAX_CACHE_SIZE / 2)
-        keysToRemove.forEach { cache.remove(it) }
+        cache.invalidateAll()
     }
 
     /**
@@ -57,7 +52,25 @@ object ShapeCache {
      * @param key The key of the shape to remove.
      */
     fun invalidate(key: ShapeCacheKey) {
-        cache.remove(key)
+        cache.invalidate(key)
+    }
+
+    /**
+     * Returns the current size of the cache.
+     *
+     * @return The number of entries in the cache.
+     */
+    fun size(): Long {
+        return cache.estimatedSize()
+    }
+
+    /**
+     * Returns statistics about the cache if stats recording is enabled.
+     *
+     * @return A string representation of cache statistics.
+     */
+    fun stats(): String {
+        return cache.stats().toString()
     }
 }
 
