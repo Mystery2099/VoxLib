@@ -105,6 +105,10 @@ shadowJar {
 	// Use a temporary classifier
 	archiveClassifier.set('dev')
 
+	// Make sure the output file is in the expected location
+	archiveFileName = "${archivesBaseName}-${version}-dev.jar"
+	destinationDirectory = file("${project.buildDir}/libs")
+
 	// Make sure this runs before remapJar
 	finalizedBy remapJar
 }
@@ -112,7 +116,8 @@ shadowJar {
 // Configure remapJar to use shadowJar output
 remapJar {
 	dependsOn shadowJar
-	input = shadowJar.archiveFile
+	// Use a provider to get the shadowJar output file at execution time
+	input = file("${project.buildDir}/libs/${archivesBaseName}-${version}-dev.jar")
 
 	// Make sure the final JAR has no classifier
 	archiveClassifier.set('')
