@@ -4,6 +4,7 @@ plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
 	id "org.jetbrains.kotlin.jvm" version "2.1.20"
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 version = project.mod_version
@@ -45,8 +46,12 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	// Caffeine for high-performance caching
-	implementation "com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}"
+	// Caffeine for high-performance caching - will be relocated to avoid conflicts
+	implementation("com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}") {
+		// Exclude transitive dependencies we don't need
+		exclude group: 'org.checkerframework', module: 'checker-qual'
+		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+	}
 }
 
 processResources {
@@ -63,6 +68,27 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(KotlinCompile).configureEach {
 	it.kotlinOptions.jvmTarget = 17
+}
+
+// Configure Shadow plugin to relocate Caffeine
+shadowJar {
+	// Only include Caffeine in the shadowed JAR
+	configurations = [project.configurations.implementation]
+
+	// Relocate Caffeine to avoid conflicts with other mods
+	relocate 'com.github.benmanes.caffeine', 'com.github.mystery2099.voxlib.internal.caffeine'
+
+	// Minimize the JAR to only include what we use
+	minimize()
+
+	// Make sure the classifier is empty so this becomes the main artifact
+	archiveClassifier.set('')
+}
+
+// Make the remapJar task depend on shadowJar
+remapJar {
+	dependsOn shadowJar
+	input = shadowJar.archiveFile
 }
 
 java {

@@ -1,5 +1,6 @@
 package com.github.mystery2099.voxlib.optimization
 
+// Using relocated Caffeine to avoid conflicts with other mods
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Cache
 import net.minecraft.util.shape.VoxelShape
