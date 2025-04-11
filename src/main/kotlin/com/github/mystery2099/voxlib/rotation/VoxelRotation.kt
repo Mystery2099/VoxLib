@@ -153,9 +153,7 @@ object VoxelRotation {
         transformation: VoxelShapeTransformation,
         useCache: Boolean = true
     ): VoxelShape {
-        // Handle special cases for better performance
-        if (shape.isEmpty) return VoxelShapes.empty()
-        if (shape == VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+        if (shape.isEmpty || shape == VoxelShapes.fullCube()) return shape
 
         if (!useCache) return shape.rotateVerticalUncached(transformation)
 
@@ -177,11 +175,7 @@ object VoxelRotation {
      * @return A new VoxelShape after being rotated or flipped.
      */
     private fun VoxelShape.rotateUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        // For empty shapes, return empty to avoid unnecessary processing
-        if (this.isEmpty) return VoxelShapes.empty()
-
-        // For full shapes, return full to avoid unnecessary processing
-        if (this == VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+        if (this.isEmpty || this == VoxelShapes.fullCube()) return this
 
         val shapes = mutableListOf<VoxelShape>()
         this.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
@@ -206,11 +200,7 @@ object VoxelRotation {
      * @return A new VoxelShape after being rotated or flipped vertically.
      */
     private fun VoxelShape.rotateVerticalUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        // For empty shapes, return empty to avoid unnecessary processing
-        if (this.isEmpty) return VoxelShapes.empty()
-
-        // For full shapes, return full to avoid unnecessary processing
-        if (this == VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+        if (this.isEmpty || this == VoxelShapes.fullCube()) return this
 
         val shapes = mutableListOf<VoxelShape>()
         this.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
