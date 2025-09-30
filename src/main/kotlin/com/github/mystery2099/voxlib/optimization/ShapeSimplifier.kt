@@ -1,9 +1,11 @@
 package com.github.mystery2099.voxlib.optimization
 
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
-import net.minecraft.util.math.Box
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import com.github.mystery2099.voxlib.union
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.shapes.BooleanOp
+import net.minecraft.world.phys.shapes.Shapes
+import net.minecraft.world.phys.shapes.VoxelShape
 
 /**
  * A utility class for simplifying complex VoxelShapes to improve performance.
@@ -21,10 +23,7 @@ object ShapeSimplifier {
      * @param shape The complex shape to simplify.
      * @return A simplified VoxelShape based on the original's bounding box.
      */
-    fun simplifyToBoundingBox(shape: VoxelShape): VoxelShape {
-        val boundingBox = shape.boundingBox
-        return VoxelShapes.cuboid(boundingBox)
-    }
+    fun simplifyToBoundingBox(shape: VoxelShape): VoxelShape = Shapes.create(shape.bounds())
 
     /**
      * Creates a simplified version of a complex shape by reducing the number of boxes.
@@ -35,32 +34,14 @@ object ShapeSimplifier {
      * @return A simplified VoxelShape with fewer boxes.
      */
     fun simplify(shape: VoxelShape, maxBoxes: Int = 8): VoxelShape {
-        // Count boxes by iterating
         var boxCount = 0
-        shape.forEachBox { _, _, _, _, _, _ -> boxCount++ }
-
-        // No simplification needed if already under the limit
-        if (boxCount <= maxBoxes) {
-            return shape
-        }
-
-        // Extract all boxes from the shape
-        val boxes = mutableListOf<Box>()
-        shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            boxes.add(Box(minX, minY, minZ, maxX, maxY, maxZ))
-        }
-
-        // Merge boxes until we're under the limit
-        while (boxes.size > maxBoxes) {
-            mergeClosestBoxes(boxes)
-        }
-
-        // Rebuild the shape from simplified boxes
-        var result = VoxelShapes.empty()
-        boxes.forEach { box ->
-            result = VoxelShapes.union(result, VoxelShapes.cuboid(box))
-        }
-
+        shape.forAllBoxes { _, _, _, _, _, _ -> boxCount++ }
+        if(boxCount <= maxBoxes) return shape
+        val boxes = mutableListOf<AABB>()
+        shape.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ -> boxes.add(AABB(minX, minY, minZ, maxX, maxY, maxZ)) }
+        while (boxes.size > maxBoxes) mergeClosestBoxes(boxes)
+        var result = Shapes.empty()
+        boxes.forEach { box -> result = union(result, Shapes.create(box)) }
         return result
     }
 
@@ -69,14 +50,13 @@ object ShapeSimplifier {
      *
      * @param boxes The list of boxes to process.
      */
-    private fun mergeClosestBoxes(boxes: MutableList<Box>) {
+    private fun mergeClosestBoxes(boxes: MutableList<AABB>) {
         if (boxes.size <= 1) return
-
         var closestPair: Pair<Int, Int>? = null
         var minDistance = Double.MAX_VALUE
 
         // Find the closest pair of boxes
-        for (i in 0 until boxes.size - 1) {
+        for (i in 0 until boxes.size - 1)
             for (j in i + 1 until boxes.size) {
                 val distance = calculateBoxDistance(boxes[i], boxes[j])
                 if (distance < minDistance) {
@@ -84,7 +64,6 @@ object ShapeSimplifier {
                     closestPair = Pair(i, j)
                 }
             }
-        }
 
         // Merge the closest pair
         closestPair?.let { (i, j) ->
@@ -103,7 +82,7 @@ object ShapeSimplifier {
      * @param box2 The second box.
      * @return The distance between the boxes.
      */
-    private fun calculateBoxDistance(box1: Box, box2: Box): Double {
+    private fun calculateBoxDistance(box1: AABB, box2: AABB): Double {
         if (box1.intersects(box2)) return 0.0
 
         // Find minimum distance between box edges on each axis
@@ -121,8 +100,8 @@ object ShapeSimplifier {
      * @param box2 The second box.
      * @return A new box that contains both input boxes.
      */
-    private fun mergeBoxes(box1: Box, box2: Box): Box {
-        return Box(
+    private fun mergeBoxes(box1: AABB, box2: AABB): AABB {
+        return AABB(
             minOf(box1.minX, box2.minX),
             minOf(box1.minY, box2.minY),
             minOf(box1.minZ, box2.minZ),
@@ -175,9 +154,6 @@ object ShapeSimplifier {
         )
 
         // Subtract inner from outer to create hollow shape
-        return VoxelShapes.combineAndSimplify(
-            outerBox, innerBox,
-            net.minecraft.util.function.BooleanBiFunction.ONLY_FIRST
-        )
+        return Shapes.join(outerBox, innerBox, BooleanOp.ONLY_FIRST)
     }
 }

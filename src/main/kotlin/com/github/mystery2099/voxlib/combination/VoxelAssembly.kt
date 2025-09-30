@@ -3,10 +3,10 @@ package com.github.mystery2099.voxlib.combination
 import com.github.mystery2099.voxlib.optimization.ShapeCache
 import com.github.mystery2099.voxlib.optimization.ShapeCacheKey
 import com.github.mystery2099.voxlib.optimization.ShapeSimplifier
-import net.minecraft.block.Block
-import net.minecraft.util.function.BooleanBiFunction
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import net.minecraft.world.level.block.Block
+import net.minecraft.world.phys.shapes.BooleanOp
+import net.minecraft.world.phys.shapes.Shapes
+import net.minecraft.world.phys.shapes.VoxelShape
 
 /**
  * A utility object for working with VoxelShapes in Minecraft game development.
@@ -38,7 +38,7 @@ object VoxelAssembly {
         maxX: Number,
         maxY: Number,
         maxZ: Number
-    ): VoxelShape = Block.createCuboidShape(
+    ): VoxelShape = Block.box(
         minX.toDouble(),
         minY.toDouble(),
         minZ.toDouble(),
@@ -82,22 +82,14 @@ object VoxelAssembly {
      * @return The combined shape.
      */
     private fun unionWithCache(shape1: VoxelShape, shape2: VoxelShape, useCache: Boolean = true): VoxelShape {
-        // Handle special cases for better performance
-        if (shape1.isEmpty) return shape2
-        if (shape2.isEmpty) return shape1
-        if (shape1 == VoxelShapes.fullCube()) return shape1
-        if (shape2 == VoxelShapes.fullCube()) return shape2
-
-        if (!useCache) return VoxelShapes.union(shape1, shape2)
-
+        if (shape1.isEmpty || shape2 == Shapes.block()) return shape2
+        if (shape2.isEmpty || shape1 == Shapes.block()) return shape1
+        if (!useCache) return union(shape1, shape2)
         val cacheKey = ShapeCacheKey(
             originalShapeHash = shape1.hashCode() * 31 + shape2.hashCode(),
             operationId = "union"
         )
-
-        return ShapeCache.getOrCompute(cacheKey) {
-            VoxelShapes.union(shape1, shape2)
-        }
+        return ShapeCache.getOrCompute(cacheKey) { union(shape1, shape2) }
     }
 
     /**
@@ -122,8 +114,8 @@ object VoxelAssembly {
      *
      * @see VoxelShapes.combine
      */
-    fun combine(function: BooleanBiFunction, vararg voxelShapes: VoxelShape): VoxelShape {
-        return voxelShapes.reduce { a, b -> VoxelShapes.combine(a, b, function) }
+    fun combine(function: BooleanOp, vararg voxelShapes: VoxelShape): VoxelShape {
+        return voxelShapes.reduce { a, b -> Shapes.join(a, b, function) }
     }
 
     /**
@@ -137,16 +129,16 @@ object VoxelAssembly {
      * @see VoxelShapes.union
      */
     fun union(vararg voxelShapes: VoxelShape): VoxelShape {
-        if (voxelShapes.isEmpty()) return VoxelShapes.empty()
+        if (voxelShapes.isEmpty()) return Shapes.empty()
         if (voxelShapes.size == 1) return voxelShapes[0]
 
         // Filter out empty shapes for better performance
         val nonEmptyShapes = voxelShapes.filter { !it.isEmpty }
-        if (nonEmptyShapes.isEmpty()) return VoxelShapes.empty()
+        if (nonEmptyShapes.isEmpty()) return Shapes.empty()
         if (nonEmptyShapes.size == 1) return nonEmptyShapes[0]
 
         // Check for full cube which would make the result always a full cube
-        if (nonEmptyShapes.any { it == VoxelShapes.fullCube() }) return VoxelShapes.fullCube()
+        if (nonEmptyShapes.any { it == Shapes.block() }) return Shapes.block()
 
         // Always use cache for better performance
         // We removed the useCache parameter to fix the vararg issue
@@ -172,17 +164,17 @@ object VoxelAssembly {
      * @return A single VoxelShape representing the union of all input shapes.
      */
     private fun optimizedUnion(shapes: List<VoxelShape>): VoxelShape {
-        if (shapes.isEmpty()) return VoxelShapes.empty()
+        if (shapes.isEmpty()) return Shapes.empty()
         if (shapes.size == 1) return shapes[0]
 
         // Use a divide-and-conquer approach for better performance
         return when {
-            shapes.size <= 4 -> shapes.reduce { a, b -> VoxelShapes.union(a, b) }
+            shapes.size <= 4 -> shapes.reduce { a, b -> union(a, b) }
             else -> {
                 val mid = shapes.size / 2
                 val left = optimizedUnion(shapes.subList(0, mid))
                 val right = optimizedUnion(shapes.subList(mid, shapes.size))
-                VoxelShapes.union(left, right)
+                union(left, right)
             }
         }
     }
@@ -235,9 +227,7 @@ object VoxelAssembly {
      *
      * @see ShapeSimplifier.simplifyToBoundingBox
      */
-    fun createBoundingBoxShape(shape: VoxelShape): VoxelShape {
-        return ShapeSimplifier.simplifyToBoundingBox(shape)
-    }
+    private fun createBoundingBoxShape(shape: VoxelShape): VoxelShape = ShapeSimplifier.simplifyToBoundingBox(shape)
 
     /**
      * Creates a simplified outline shape for a block with the given dimensions.

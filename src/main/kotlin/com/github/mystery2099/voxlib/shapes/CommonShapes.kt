@@ -2,7 +2,7 @@ package com.github.mystery2099.voxlib.shapes
 
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
-import net.minecraft.util.shape.VoxelShape
+import net.minecraft.world.phys.shapes.VoxelShape
 
 /**
  * A utility object providing pre-defined common shapes used in Minecraft modding.

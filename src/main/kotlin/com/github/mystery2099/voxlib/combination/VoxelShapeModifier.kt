@@ -3,7 +3,7 @@ package com.github.mystery2099.voxlib.combination
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.appendShapes
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.unifyWith
-import net.minecraft.util.shape.VoxelShape
+import net.minecraft.world.phys.shapes.VoxelShape
 
 /**
  * A utility class for conditionally combining [VoxelShape]s with a stored [VoxelShape].

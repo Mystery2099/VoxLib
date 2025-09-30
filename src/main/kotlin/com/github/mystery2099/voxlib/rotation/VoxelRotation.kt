@@ -2,12 +2,13 @@ package com.github.mystery2099.voxlib.rotation
 
 import com.github.mystery2099.voxlib.optimization.ShapeCache
 import com.github.mystery2099.voxlib.optimization.ShapeCacheKey
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import net.minecraft.world.phys.shapes.Shapes
+import net.minecraft.world.phys.shapes.VoxelShape
+import com.github.mystery2099.voxlib.union
 
 /**
- * A utility object for performing rotations and flips on VoxelShapes.
- * It provides methods to rotate and flip VoxelShapes in various ways.
+ * A utility object for performing rotations and flips on Shapes.
+ * It provides methods to rotate and flip Shapes in various ways.
  *
  * This class uses caching to improve performance for frequently transformed shapes.
  */
@@ -125,8 +126,8 @@ object VoxelRotation {
         useCache: Boolean = true
     ): VoxelShape {
         // Handle special cases for better performance
-        if (shape.isEmpty) return VoxelShapes.empty()
-        if (shape == VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+        if(shape.isEmpty) return Shapes.empty()
+        if(shape == Shapes.block()) return Shapes.block()
 
         if (!useCache) return shape.rotateUncached(transformation)
 
@@ -153,7 +154,7 @@ object VoxelRotation {
         transformation: VoxelShapeTransformation,
         useCache: Boolean = true
     ): VoxelShape {
-        if (shape.isEmpty || shape == VoxelShapes.fullCube()) return shape
+        if (shape.isEmpty || shape == Shapes.block()) return shape
 
         if (!useCache) return shape.rotateVerticalUncached(transformation)
 
@@ -175,13 +176,13 @@ object VoxelRotation {
      * @return A new VoxelShape after being rotated or flipped.
      */
     private fun VoxelShape.rotateUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        if (this.isEmpty || this == VoxelShapes.fullCube()) return this
+        if (this.isEmpty || this == Shapes.block()) return this
 
         val shapes = mutableListOf<VoxelShape>()
-        this.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
+        forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
             val adjustedValues = adjustValues(transformation, minX, minZ, maxX, maxZ)
             shapes.add(
-                VoxelShapes.cuboid(
+                Shapes.box(
                 adjustedValues[0], minY,
                 adjustedValues[1], adjustedValues[2], maxY, adjustedValues[3]
                 )
@@ -200,10 +201,10 @@ object VoxelRotation {
      * @return A new VoxelShape after being rotated or flipped vertically.
      */
     private fun VoxelShape.rotateVerticalUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        if (this.isEmpty || this == VoxelShapes.fullCube()) return this
+        if (this.isEmpty || this == Shapes.block()) return this
 
         val shapes = mutableListOf<VoxelShape>()
-        this.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
+        this.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
             // Apply the appropriate transformation
             val newCoords = when (transformation) {
                 VoxelShapeTransformation.FLIP_VERTICAL -> {
@@ -223,11 +224,9 @@ object VoxelRotation {
             }
 
             // Create a new cuboid with the transformed coordinates
-            shapes.add(
-                VoxelShapes.cuboid(
-                    newCoords[0], newCoords[1], newCoords[2],
-                    newCoords[3], newCoords[4], newCoords[5]
-                )
+            shapes += Shapes.box(
+                newCoords[0], newCoords[1], newCoords[2],
+                newCoords[3], newCoords[4], newCoords[5]
             )
         }
 
@@ -243,17 +242,17 @@ object VoxelRotation {
      * @return A single VoxelShape representing the union of all input shapes.
      */
     private fun optimizedUnion(shapes: List<VoxelShape>): VoxelShape {
-        if (shapes.isEmpty()) return VoxelShapes.empty()
+        if (shapes.isEmpty()) return Shapes.empty()
         if (shapes.size == 1) return shapes[0]
 
         // Use a divide-and-conquer approach for better performance
         return when {
-            shapes.size <= 4 -> shapes.reduce { a, b -> VoxelShapes.union(a, b) }
+            shapes.size <= 4 -> shapes.reduce { a, b -> union(a, b) }
             else -> {
                 val mid = shapes.size / 2
                 val left = optimizedUnion(shapes.subList(0, mid))
                 val right = optimizedUnion(shapes.subList(mid, shapes.size))
-                VoxelShapes.union(left, right)
+                union(left, right)
             }
         }
     }

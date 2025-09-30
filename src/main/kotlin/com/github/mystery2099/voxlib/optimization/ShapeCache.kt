@@ -2,7 +2,7 @@ package com.github.mystery2099.voxlib.optimization
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Cache
-import net.minecraft.util.shape.VoxelShape
+import net.minecraft.world.phys.shapes.VoxelShape
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
