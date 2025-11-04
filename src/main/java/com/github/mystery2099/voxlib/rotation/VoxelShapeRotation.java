@@ -1,9 +1,6 @@
-package com.github.mystery2099.voxlib.rotation
+package com.github.mystery2099.voxlib.rotation;
 
-/**
- * Enum representing Voxel shape transformations.
- */
-enum class VoxelShapeTransformation {
+public enum VoxelShapeRotation {
     /**
      * Rotate the VoxelShape to the left (90 degrees counterclockwise around the Y axis).
      */
