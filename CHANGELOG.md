@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated dependencies for Minecraft 1.19.4
 - Updated Fabric Language Kotlin to 1.13.8+kotlin.2.3.0
 
+## [1.3.0] - 2025-12-30
+
+### Changed
+
+- Fixed Gradle deprecation warnings
+- Applied Kotlin best practices
+- Improved type safety in VoxLib APIs
+- Enhanced documentation
+
 ## [1.2.0] - 2023-05-15
 
 ### Added
