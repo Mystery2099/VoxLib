@@ -15,7 +15,12 @@ import net.minecraft.util.shape.VoxelShape
  * @see VoxelAssembly.appendShapes
  * @see VoxelAssembly.appendShapesTo
  */
-class VoxelShapeModifier internal constructor(var storedShape: VoxelShape) {
+class VoxelShapeModifier internal constructor(private var storedShape: VoxelShape) {
+
+    /**
+     * The stored VoxelShape after modifications.
+     */
+    val shape: VoxelShape get() = storedShape
 
     /**
      * Combines the [VoxelShape] it is called on with the [VoxelShapeModifier]'s [storedShape]

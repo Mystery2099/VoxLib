@@ -39,3 +39,8 @@ replay_*.log
 *.hprof
 *.jfr
 /gitlogin.properties
+
+# claude
+
+.serena/
+CLAUDE.md

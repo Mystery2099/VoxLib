@@ -198,7 +198,7 @@ object VoxelAssembly {
     fun appendShapesTo(shape: VoxelShape, configure: VoxelShapeModifier.() -> Unit): VoxelShape {
         val builder = VoxelShapeModifier(shape)
         builder.configure()
-        return builder.storedShape
+        return builder.shape
     }
 
     /**

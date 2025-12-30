@@ -35,19 +35,15 @@ object ShapeSimplifier {
      * @return A simplified VoxelShape with fewer boxes.
      */
     fun simplify(shape: VoxelShape, maxBoxes: Int = 8): VoxelShape {
-        // Count boxes by iterating
-        var boxCount = 0
-        shape.forEachBox { _, _, _, _, _, _ -> boxCount++ }
-
-        // No simplification needed if already under the limit
-        if (boxCount <= maxBoxes) {
-            return shape
-        }
-
         // Extract all boxes from the shape
         val boxes = mutableListOf<Box>()
         shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
             boxes.add(Box(minX, minY, minZ, maxX, maxY, maxZ))
+        }
+
+        // No simplification needed if already under the limit
+        if (boxes.size <= maxBoxes) {
+            return shape
         }
 
         // Merge boxes until we're under the limit
@@ -55,13 +51,10 @@ object ShapeSimplifier {
             mergeClosestBoxes(boxes)
         }
 
-        // Rebuild the shape from simplified boxes
-        var result = VoxelShapes.empty()
-        boxes.forEach { box ->
-            result = VoxelShapes.union(result, VoxelShapes.cuboid(box))
+        // Rebuild the shape from simplified boxes using fold
+        return boxes.fold(VoxelShapes.empty()) { acc, box ->
+            VoxelShapes.union(acc, VoxelShapes.cuboid(box))
         }
-
-        return result
     }
 
     /**

@@ -36,12 +36,12 @@ class ShapeCacheTest {
     fun `test getOrCompute with Function returns correct shape`() {
         // Create a simple key
         val key = ShapeCacheKey(456, "test")
-        
+
         // Get a shape from the cache (will compute it)
-        val shape = ShapeCache.getOrCompute(key, java.util.function.Function { _ ->
+        val shape = ShapeCache.getOrCompute(key) {
             VoxelShapes.fullCube()
-        })
-        
+        }
+
         // Verify the shape is correct
         assertEquals(VoxelShapes.fullCube(), shape)
     }

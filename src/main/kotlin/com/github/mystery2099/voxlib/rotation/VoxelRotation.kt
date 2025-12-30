@@ -175,10 +175,10 @@ object VoxelRotation {
      * @return A new VoxelShape after being rotated or flipped.
      */
     private fun VoxelShape.rotateUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        if (this.isEmpty || this == VoxelShapes.fullCube()) return this
+        if (isEmpty || this == VoxelShapes.fullCube()) return this
 
         val shapes = mutableListOf<VoxelShape>()
-        this.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
+        this@rotateUncached.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
             val adjustedValues = adjustValues(transformation, minX, minZ, maxX, maxZ)
             shapes.add(
                 VoxelShapes.cuboid(
@@ -200,10 +200,10 @@ object VoxelRotation {
      * @return A new VoxelShape after being rotated or flipped vertically.
      */
     private fun VoxelShape.rotateVerticalUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        if (this.isEmpty || this == VoxelShapes.fullCube()) return this
+        if (isEmpty || this == VoxelShapes.fullCube()) return this
 
         val shapes = mutableListOf<VoxelShape>()
-        this.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
+        this@rotateVerticalUncached.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
             // Apply the appropriate transformation
             val newCoords = when (transformation) {
                 VoxelShapeTransformation.FLIP_VERTICAL -> {
