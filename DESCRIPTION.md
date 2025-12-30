@@ -1,6 +1,7 @@
 # VoxLib
 
-A Minecraft Fabric library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
+A Minecraft Fabric library mod that provides utilities for manipulating,
+creating, and rotating voxel shapes in your code!
 
 ![Minecraft Version](https://img.shields.io/badge/Minecraft-1.19.4-green)
 ![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)
@@ -8,11 +9,15 @@ A Minecraft Fabric library mod that provides utilities for manipulating, creatin
 
 ## What is VoxLib?
 
-VoxLib is a lightweight Fabric library that simplifies working with Minecraft's `VoxelShape` API. It provides intuitive extensions and utilities for creating, combining, transforming, and optimizing voxel shapes—perfect for custom blocks and items that need precise collision or outline shapes.
+VoxLib is a lightweight Fabric library that simplifies working with Minecraft's
+`VoxelShape` API. It provides intuitive extensions and utilities for creating,
+combining, transforming, and optimizing voxel shapes—perfect for custom blocks
+and items that need precise collision or outline shapes.
 
 ## Features
 
 ### Create
+
 ```kotlin
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 
@@ -21,6 +26,7 @@ val slab = createCuboidShape(0, 0, 0, 16, 8, 16)
 ```
 
 ### Combine
+
 ```kotlin
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
 
@@ -29,6 +35,7 @@ val tableShape = base + post + top
 ```
 
 ### Transform
+
 ```kotlin
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotateLeft
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.flip
@@ -39,16 +46,19 @@ val opposite = shape.flip()
 ```
 
 ### Optimize
+
 - Caffeine-based caching (500 entries, 10-min expiration)
 - Shape simplification utilities
 - Divide-and-conquer union algorithms
 
 ### Debug (Client)
+
 - In-world shape visualization
 - Shape information logging
 - Shape comparison tools
 
 ### Pre-defined Common Shapes
+
 ```kotlin
 import com.github.mystery2099.voxlib.shapes.CommonShapes
 
@@ -74,6 +84,7 @@ val fenceConnections = CommonShapes.createFenceConnections(north = true, east = 
 ## Adding VoxLib as a Dependency
 
 ### Using JitPack (Easiest)
+
 ```gradle
 repositories {
     maven { url 'https://jitpack.io' }
@@ -85,6 +96,7 @@ dependencies {
 ```
 
 ### Using CurseForge Maven
+
 ```gradle
 repositories {
     maven {

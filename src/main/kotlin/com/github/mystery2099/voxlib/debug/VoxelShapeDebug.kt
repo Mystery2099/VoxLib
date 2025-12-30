@@ -1,5 +1,7 @@
 package com.github.mystery2099.voxlib.debug
 
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.VertexConsumer
 import net.minecraft.client.render.VertexConsumerProvider
@@ -27,6 +29,7 @@ object VoxelShapeDebug {
      * @param alpha The alpha value for transparency (0.0-1.0, default is 0.4).
      * @param lineWidth The width of the lines (default is 2.0).
      */
+    @Environment(EnvType.CLIENT)
     fun renderShape(
         matrices: MatrixStack,
         vertexConsumers: VertexConsumerProvider,
@@ -59,7 +62,7 @@ object VoxelShapeDebug {
      * @param box The Box to render.
      * @param color The color to use for rendering.
      * @param alpha The alpha value for transparency.
-     * @param lineWidth The width of the lines.
+     * @param lineWidth The width of the lines (unused, kept for API compatibility).
      */
     private fun drawBox(
         matrices: MatrixStack,
@@ -73,52 +76,13 @@ object VoxelShapeDebug {
         val green = color.green / 255.0f
         val blue = color.blue / 255.0f
 
-        // Draw the box outline
-        // The WorldRenderer.drawBox method signature may vary between Minecraft versions
-        try {
-            // Try the newer method signature first
-            WorldRenderer.drawBox(
-                matrices,
-                vertexConsumer,
-                box.minX, box.minY, box.minZ,
-                box.maxX, box.maxY, box.maxZ,
-                red, green, blue, alpha
-            )
-        } catch (e: NoSuchMethodError) {
-            // Fall back to older method signature if needed
-            try {
-                // Method with line width parameter
-                val drawBoxMethod = WorldRenderer::class.java.getMethod(
-                    "drawBox",
-                    MatrixStack::class.java,
-                    VertexConsumer::class.java,
-                    Double::class.java, Double::class.java, Double::class.java,
-                    Double::class.java, Double::class.java, Double::class.java,
-                    Float::class.java, Float::class.java, Float::class.java, Float::class.java,
-                    Float::class.java, Float::class.java, Float::class.java,
-                    Float::class.java
-                )
-
-                drawBoxMethod.invoke(
-                    null, // Static method
-                    matrices, vertexConsumer,
-                    box.minX, box.minY, box.minZ,
-                    box.maxX, box.maxY, box.maxZ,
-                    red, green, blue, alpha,
-                    red, green, blue,
-                    lineWidth
-                )
-            } catch (e2: Exception) {
-                // Simplest fallback - just draw without line width
-                WorldRenderer.drawBox(
-                    matrices,
-                    vertexConsumer,
-                    box.minX, box.minY, box.minZ,
-                    box.maxX, box.maxY, box.maxZ,
-                    red, green, blue, alpha
-                )
-            }
-        }
+        WorldRenderer.drawBox(
+            matrices,
+            vertexConsumer,
+            box.minX, box.minY, box.minZ,
+            box.maxX, box.maxY, box.maxZ,
+            red, green, blue, alpha
+        )
     }
 
     /**
