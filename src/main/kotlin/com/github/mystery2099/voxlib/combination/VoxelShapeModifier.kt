@@ -43,11 +43,6 @@ class VoxelShapeModifier internal constructor(private var storedShape: VoxelShap
      *
      * @see case
      * @see VoxelAssembly.appendShapes
-     * @see VoxelAssembly.appendShapesTo
-     * @see VoxelAssembly.plus
-     * @see VoxelAssembly.unifyWith
-     * @see VoxelAssembly.union
-     * @see VoxelAssembly.combine
      */
     fun append(shape: VoxelShape, condition: Boolean = true): VoxelShape {
         if (condition) storedShape += shape

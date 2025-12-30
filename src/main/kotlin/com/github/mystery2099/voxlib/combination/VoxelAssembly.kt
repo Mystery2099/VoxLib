@@ -109,6 +109,12 @@ object VoxelAssembly {
      *
      * @see union
      */
+    /**
+     * Combines a single VoxelShape with a list of other VoxelShapes using the union operation.
+     *
+     * @param otherShapes Additional VoxelShapes to combine with the receiver.
+     * @return A new VoxelShape representing the union of all shapes.
+     */
     fun VoxelShape.unifyWith(vararg otherShapes: VoxelShape): VoxelShape = union(this, *otherShapes)
 
 

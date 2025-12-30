@@ -2,6 +2,7 @@ package com.github.mystery2099.voxlib.shapes
 
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
+import net.minecraft.util.math.Direction
 import net.minecraft.util.shape.VoxelShape
 
 /**
@@ -140,18 +141,23 @@ object CommonShapes {
     /**
      * Creates a stair shape.
      *
-     * @param facing The direction the stairs are facing (0=north, 1=east, 2=south, 3=west).
+     * @param facing The direction the stairs are facing.
      * @return A VoxelShape representing stairs facing the specified direction.
+     * @throws IllegalArgumentException if facing is UP or DOWN (only horizontal directions valid).
      */
-    fun createStairs(facing: Int): VoxelShape {
+    fun createStairs(facing: Direction): VoxelShape {
+        require(facing in listOf(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
+            "Stairs must face NORTH, EAST, SOUTH, or WEST"
+        }
+
         val bottom = createCuboidShape(0, 0, 0, 16, 8, 16)
 
         val top = when (facing) {
-            0 -> createCuboidShape(0, 8, 0, 16, 16, 8)    // North
-            1 -> createCuboidShape(8, 8, 0, 16, 16, 16)   // East
-            2 -> createCuboidShape(0, 8, 8, 16, 16, 16)   // South
-            3 -> createCuboidShape(0, 8, 0, 8, 16, 16)    // West
-            else -> throw IllegalArgumentException("Facing must be between 0 and 3")
+            Direction.NORTH -> createCuboidShape(0, 8, 0, 16, 16, 8)
+            Direction.EAST -> createCuboidShape(8, 8, 0, 16, 16, 16)
+            Direction.SOUTH -> createCuboidShape(0, 8, 8, 16, 16, 16)
+            Direction.WEST -> createCuboidShape(0, 8, 0, 8, 16, 16)
+            else -> throw IllegalArgumentException("Stairs must face a horizontal direction")
         }
 
         return bottom + top
