@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "voxlib-test",
+  "name": "VoxLib Test Environment",
+  "version": "${version}",
+  "description": "Test environment for VoxLib tests",
+  "environment": "*",
+  "entrypoints": {
+    "main": []
+  }
+}
