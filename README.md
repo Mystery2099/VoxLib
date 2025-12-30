@@ -58,7 +58,7 @@ dependencies {
 }
 ```
 
-Replace `TAG` with a version tag like `v1.2.0` or use `master-SNAPSHOT` for the latest development version.
+Replace `TAG` with a version tag like `v1.4.0` or use `master-SNAPSHOT` for the latest development version.
 
 #### Option 3: GitHub Packages
 
@@ -98,10 +98,29 @@ import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 val baseShape = createCuboidShape(0, 0, 0, 16, 1, 16) // A slab at the bottom of the block
 ```
 
+### Pre-defined Common Shapes
+
+```kotlin
+import com.github.mystery2099.voxlib.shapes.CommonShapes
+
+// Common pre-defined shapes for quick use
+val slab = CommonShapes.createSlab(8)           // Half-height slab
+val slabTop = CommonShapes.createTopSlab(8)     // Top half slab
+val pillar = CommonShapes.createPillar(6)       // 6-wide centered pillar
+val table = CommonShapes.createTable()          // Default table
+val chair = CommonShapes.createChair()          // Default chair with backrest
+val stairsShape = CommonShapes.createStairs(Direction.NORTH) // Stairs facing north
+val fencePost = CommonShapes.createFencePost()  // Standard fence post
+
+// Fence with connections
+val fenceWithSides = CommonShapes.createFenceConnections(
+    north = true, east = true, south = false, west = false
+)
+```
+
 ### Combining Shapes
 
 ```kotlin
-import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 
 // Create individual shapes
@@ -179,7 +198,7 @@ val rotatedShape = complexShape.rotateRight() // Uses cache automatically
 // so you don't need to worry about memory leaks
 
 // You can also use the VoxelAssembly utilities for optimized shape operations
-val optimizedUnion = union(shape1, shape2, shape3) // Optimized union operation
+val optimizedUnion = VoxelAssembly.union(shape1, shape2, shape3) // Optimized union operation
 ```
 
 ## Documentation
