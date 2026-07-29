@@ -5,6 +5,30 @@ All notable changes to VoxLib will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-12-30
+
+### Added
+
+- Debug tools infrastructure with client-side support
+- `VoxLibConfig` - Validated, persisted client debug settings
+- `VoxelShapeDebugClient` - Client-only debug state management
+- Client environment guards for `VoxelShapeDebug` rendering methods
+- `renderShapeWithConfig()` helper method using client config settings
+- Native config screen with debug mode, color, alpha, and reset controls
+
+### Changed
+
+- Updated version to 1.5.0+1.19.4
+- Added client entrypoint `VoxLibClient` for debug features
+- Added optional ModMenu integration for config UI access
+
+### Fixed
+
+- Added client-side environment guards to prevent server crashes
+- Prevented cache hash collisions from returning unrelated shapes
+- Handled empty bounding-box simplification and invalid box limits safely
+- Replaced placeholder tests with explicit skips and real asymmetric rotation coverage
+
 ## [1.4.0] - 2025-12-30
 
 ### Added
@@ -91,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial project setup
 - Basic mod structure
 
+[1.5.0]: https://github.com/Mystery2099/VoxLib/compare/v1.4.0%2B1.19.4...v1.5.0%2B1.19.4
 [1.4.0]: https://github.com/Mystery2099/VoxLib/compare/v1.2.0...v1.4.0%2B1.19.4
 [1.2.0]: https://github.com/Mystery2099/VoxLib/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Mystery2099/VoxLib/compare/v1.0.0...v1.1.0

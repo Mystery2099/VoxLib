@@ -22,6 +22,8 @@ object ShapeSimplifier {
      * @return A simplified VoxelShape based on the original's bounding box.
      */
     fun simplifyToBoundingBox(shape: VoxelShape): VoxelShape {
+        if (shape.isEmpty) return VoxelShapes.empty()
+
         val boundingBox = shape.boundingBox
         return VoxelShapes.cuboid(boundingBox)
     }
@@ -35,6 +37,8 @@ object ShapeSimplifier {
      * @return A simplified VoxelShape with fewer boxes.
      */
     fun simplify(shape: VoxelShape, maxBoxes: Int = 8): VoxelShape {
+        require(maxBoxes >= 1) { "maxBoxes must be at least 1" }
+
         // Extract all boxes from the shape
         val boxes = mutableListOf<Box>()
         shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->

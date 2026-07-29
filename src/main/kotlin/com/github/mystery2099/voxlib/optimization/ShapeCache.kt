@@ -22,7 +22,7 @@ object ShapeCache {
     /**
      * Caffeine cache with automatic eviction policies
      */
-    private val cache: Cache<ShapeCacheKey, VoxelShape> = Caffeine.newBuilder()
+    private val cache: Cache<Any, VoxelShape> = Caffeine.newBuilder()
         .maximumSize(MAX_CACHE_SIZE)
         .expireAfterAccess(10, TimeUnit.MINUTES)
         .recordStats()
@@ -36,7 +36,7 @@ object ShapeCache {
      * @return The cached or newly computed VoxelShape.
      */
     fun getOrCompute(key: ShapeCacheKey, computeFunction: Function<ShapeCacheKey, VoxelShape>): VoxelShape {
-        return cache.get(key) { k -> computeFunction.apply(k) }
+        return cache.get(key) { computeFunction.apply(key) }
     }
 
     /**
@@ -48,6 +48,10 @@ object ShapeCache {
      * @return The cached or newly computed VoxelShape.
      */
     fun getOrCompute(key: ShapeCacheKey, computeFunction: () -> VoxelShape): VoxelShape {
+        return cache.get(key) { _ -> computeFunction() }
+    }
+
+    internal fun getOrCompute(key: ShapeOperationCacheKey, computeFunction: () -> VoxelShape): VoxelShape {
         return cache.get(key) { _ -> computeFunction() }
     }
 
@@ -98,4 +102,11 @@ data class ShapeCacheKey(
     val originalShapeHash: Int,
     val operationId: String,
     val parameters: List<Any> = emptyList()
+)
+
+internal data class ShapeOperationCacheKey(
+    val originalShapeHash: Int,
+    val operationId: String,
+    val parameters: List<Any> = emptyList(),
+    val sourceShapes: List<VoxelShape>
 )

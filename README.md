@@ -58,7 +58,7 @@ dependencies {
 }
 ```
 
-Replace `TAG` with a version tag like `v1.4.0` or use `master-SNAPSHOT` for the latest development version.
+Replace `TAG` with a version tag like `v1.5.0+1.19.4` or use `master-SNAPSHOT` for the latest development version.
 
 #### Option 3: GitHub Packages
 

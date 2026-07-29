@@ -80,7 +80,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation 'com.github.Mystery2099:VoxLib:v1.4.0'
+    modImplementation 'com.github.Mystery2099:VoxLib:v1.5.0+1.19.4'
 }
 ```
 
@@ -112,7 +112,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation "com.github.mystery2099:voxlib:1.4.0"
+    modImplementation "com.github.mystery2099:voxlib:1.5.0+1.19.4"
 }
 ```
 

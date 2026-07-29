@@ -1,177 +1,88 @@
 package com.github.mystery2099.voxlib.rotation
 
 import com.github.mystery2099.voxlib.optimization.ShapeCache
-import net.minecraft.util.shape.VoxelShapes
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-
-// Extension function imports
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.flip
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.flipHorizontal
-import com.github.mystery2099.voxlib.rotation.VoxelRotation.flipVertical
-import com.github.mystery2099.voxlib.rotation.VoxelRotation.flipZ
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotate
-import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotateLeft
-import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotateRight
+import net.minecraft.util.shape.VoxelShape
+import net.minecraft.util.shape.VoxelShapes
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.MethodSource
+import java.util.stream.Stream
 
-/**
- * Unit tests for the VoxelRotation object.
- */
 class VoxelRotationTest {
-
     @BeforeEach
     fun setUp() {
         ShapeCache.clearCache()
     }
 
-    @Test
-    fun `rotation of empty shape returns empty`() {
-        val empty = VoxelShapes.empty()
+    @ParameterizedTest
+    @EnumSource(VoxelShapeTransformation::class)
+    fun `every transformation preserves empty shape`(transformation: VoxelShapeTransformation) {
+        assertEquals(VoxelShapes.empty(), VoxelShapes.empty().rotate(transformation))
+    }
 
-        val rotated = empty.rotateLeft()
+    @ParameterizedTest
+    @EnumSource(VoxelShapeTransformation::class)
+    fun `every transformation preserves full cube`(transformation: VoxelShapeTransformation) {
+        assertEquals(VoxelShapes.fullCube(), VoxelShapes.fullCube().rotate(transformation))
+    }
 
-        assertEquals(VoxelShapes.empty(), rotated)
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("asymmetricTransformations")
+    fun `transformations move asymmetric shape correctly`(
+        transformation: VoxelShapeTransformation,
+        expected: DoubleArray
+    ) {
+        val shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, 0.25, 0.5, 0.5)
+
+        assertBox(shape.rotate(transformation), expected)
     }
 
     @Test
-    fun `rotation of full cube returns full cube`() {
-        val fullCube = VoxelShapes.fullCube()
+    fun `flip remains alias for flipHorizontal`() {
+        val shape = VoxelShapes.cuboid(0.0, 0.0, 0.0, 0.25, 0.5, 0.5)
 
-        val rotated = fullCube.rotateLeft()
-
-        assertEquals(VoxelShapes.fullCube(), rotated)
+        assertEquals(shape.flipHorizontal().boundingBox, shape.flip().boundingBox)
     }
 
-    @Test
-    fun `rotateLeft of full cube returns full cube`() {
-        val fullCube = VoxelShapes.fullCube()
-
-        val rotated = fullCube.rotateLeft()
-
-        assertEquals(VoxelShapes.fullCube(), rotated)
+    private fun assertBox(shape: VoxelShape, expected: DoubleArray) {
+        val box = shape.boundingBox
+        val actual = doubleArrayOf(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ)
+        assertArrayEquals(expected, actual, DELTA)
     }
 
-    @Test
-    fun `rotateRight of full cube returns full cube`() {
-        val fullCube = VoxelShapes.fullCube()
+    private companion object {
+        const val DELTA = 0.0001
 
-        val rotated = fullCube.rotateRight()
-
-        assertEquals(VoxelShapes.fullCube(), rotated)
-    }
-
-    @Test
-    fun `flipHorizontal of full cube returns full cube`() {
-        val fullCube = VoxelShapes.fullCube()
-
-        val flipped = fullCube.flipHorizontal()
-
-        assertEquals(VoxelShapes.fullCube(), flipped)
-    }
-
-    @Test
-    fun `flipVertical of full cube returns full cube`() {
-        val fullCube = VoxelShapes.fullCube()
-
-        val flipped = fullCube.flipVertical()
-
-        assertEquals(VoxelShapes.fullCube(), flipped)
-    }
-
-    @Test
-    fun `flipZ of full cube returns full cube`() {
-        val fullCube = VoxelShapes.fullCube()
-
-        val flipped = fullCube.flipZ()
-
-        assertEquals(VoxelShapes.fullCube(), flipped)
-    }
-
-    @Test
-    fun `rotateLeft of empty shape returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.rotateLeft()
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `rotateRight of empty shape returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.rotateRight()
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `flip of empty shape returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.flip()
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `rotate with ROTATE_LEFT on empty returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.rotate(VoxelShapeTransformation.ROTATE_LEFT)
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `rotate with ROTATE_RIGHT on empty returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.rotate(VoxelShapeTransformation.ROTATE_RIGHT)
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `rotate with FLIP_HORIZONTAL on empty returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.rotate(VoxelShapeTransformation.FLIP_HORIZONTAL)
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `rotate with FLIP_VERTICAL on empty returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.rotate(VoxelShapeTransformation.FLIP_VERTICAL)
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `rotate with FLIP_Z on empty returns empty`() {
-        val empty = VoxelShapes.empty()
-
-        val result = empty.rotate(VoxelShapeTransformation.FLIP_Z)
-
-        assertEquals(VoxelShapes.empty(), result)
-    }
-
-    @Test
-    fun `VoxelShapeTransformation has 5 values`() {
-        assertEquals(5, VoxelShapeTransformation.entries.size)
-    }
-
-    @Test
-    fun `flip is alias for flipHorizontal`() {
-        val fullCube = VoxelShapes.fullCube()
-
-        val flipped = fullCube.flip()
-        val flippedHorizontal = fullCube.flipHorizontal()
-
-        assertEquals(flippedHorizontal, flipped)
+        @JvmStatic
+        fun asymmetricTransformations(): Stream<Arguments> = Stream.of(
+            Arguments.of(
+                VoxelShapeTransformation.ROTATE_LEFT,
+                doubleArrayOf(0.5, 0.0, 0.0, 1.0, 0.5, 0.25)
+            ),
+            Arguments.of(
+                VoxelShapeTransformation.ROTATE_RIGHT,
+                doubleArrayOf(0.0, 0.0, 0.75, 0.5, 0.5, 1.0)
+            ),
+            Arguments.of(
+                VoxelShapeTransformation.FLIP_HORIZONTAL,
+                doubleArrayOf(0.75, 0.0, 0.5, 1.0, 0.5, 1.0)
+            ),
+            Arguments.of(
+                VoxelShapeTransformation.FLIP_VERTICAL,
+                doubleArrayOf(0.0, 0.5, 0.0, 0.25, 1.0, 0.5)
+            ),
+            Arguments.of(
+                VoxelShapeTransformation.FLIP_Z,
+                doubleArrayOf(0.0, 0.0, 0.5, 0.25, 0.5, 1.0)
+            )
+        )
     }
 }

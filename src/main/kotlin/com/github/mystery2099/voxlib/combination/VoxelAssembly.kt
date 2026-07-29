@@ -1,7 +1,7 @@
 package com.github.mystery2099.voxlib.combination
 
 import com.github.mystery2099.voxlib.optimization.ShapeCache
-import com.github.mystery2099.voxlib.optimization.ShapeCacheKey
+import com.github.mystery2099.voxlib.optimization.ShapeOperationCacheKey
 import com.github.mystery2099.voxlib.optimization.ShapeSimplifier
 import net.minecraft.block.Block
 import net.minecraft.util.function.BooleanBiFunction
@@ -17,6 +17,7 @@ import net.minecraft.util.shape.VoxelShapes
  * This class includes optimizations for better performance with complex shapes.
  */
 object VoxelAssembly {
+    private const val MAX_CACHED_UNION_SHAPES = 16
 
     /**
      * Creates a cuboid shape using the provided minimum and maximum coordinates.
@@ -90,9 +91,10 @@ object VoxelAssembly {
 
         if (!useCache) return VoxelShapes.union(shape1, shape2)
 
-        val cacheKey = ShapeCacheKey(
+        val cacheKey = ShapeOperationCacheKey(
             originalShapeHash = shape1.hashCode() * 31 + shape2.hashCode(),
-            operationId = "union"
+            operationId = "union",
+            sourceShapes = listOf(shape1, shape2)
         )
 
         return ShapeCache.getOrCompute(cacheKey) {
@@ -129,6 +131,8 @@ object VoxelAssembly {
      * @see VoxelShapes.combine
      */
     fun combine(function: BooleanBiFunction, vararg voxelShapes: VoxelShape): VoxelShape {
+        if (voxelShapes.isEmpty()) return VoxelShapes.empty()
+
         return voxelShapes.reduce { a, b -> VoxelShapes.combine(a, b, function) }
     }
 
@@ -153,16 +157,15 @@ object VoxelAssembly {
 
         // Check for full cube which would make the result always a full cube
         if (nonEmptyShapes.any { it == VoxelShapes.fullCube() }) return VoxelShapes.fullCube()
+        if (nonEmptyShapes.size > MAX_CACHED_UNION_SHAPES) return optimizedUnion(nonEmptyShapes)
 
-        // Always use cache for better performance
-        // We removed the useCache parameter to fix the vararg issue
-
-        // Create a cache key based on the hash codes of all shapes
+        // Cache small unions while avoiding retention of large shape graphs.
         val combinedHash = nonEmptyShapes.fold(0) { acc, shape -> acc * 31 + shape.hashCode() }
-        val cacheKey = ShapeCacheKey(
+        val cacheKey = ShapeOperationCacheKey(
             originalShapeHash = combinedHash,
             operationId = "unionMultiple",
-            parameters = listOf(nonEmptyShapes.size)
+            parameters = listOf(nonEmptyShapes.size),
+            sourceShapes = nonEmptyShapes
         )
 
         return ShapeCache.getOrCompute(cacheKey) {

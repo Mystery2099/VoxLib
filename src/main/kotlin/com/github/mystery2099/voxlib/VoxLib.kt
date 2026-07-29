@@ -1,6 +1,9 @@
 package com.github.mystery2099.voxlib
 
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import org.slf4j.LoggerFactory
 
 /**
@@ -13,7 +16,7 @@ object VoxLib : ModInitializer {
     /**
      * The current version of VoxLib.
      */
-    private const val VERSION = "1.4.0+1.19.4"
+    const val VERSION = "1.5.0+1.19.4"
 
     /**
      * The Minecraft version this mod is built for.
@@ -24,4 +27,14 @@ object VoxLib : ModInitializer {
         logger.info("Initializing VoxLib v$VERSION for Minecraft $MINECRAFT_VERSION")
         logger.info("VoxLib is ready to help with your voxel shape needs!")
 	}
+}
+
+/**
+ * Client-only entry point for VoxLib debug features.
+ */
+@Environment(EnvType.CLIENT)
+object VoxLibClient : ClientModInitializer {
+    override fun onInitializeClient() {
+        com.github.mystery2099.voxlib.debug.VoxelShapeDebugClient.initialize()
+    }
 }
