@@ -2,8 +2,10 @@ package com.github.mystery2099.voxlib.optimization
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Cache
+import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation
 import net.minecraft.util.shape.VoxelShape
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
 
 /**
@@ -27,6 +29,9 @@ object ShapeCache {
         .expireAfterAccess(10, TimeUnit.MINUTES)
         .recordStats()
         .build()
+    private val cacheGeneration = AtomicLong()
+    private val lastBinaryUnion = ThreadLocal.withInitial(::LastBinaryUnion)
+    private val lastTransformation = ThreadLocal.withInitial(::LastTransformation)
 
     /**
      * Gets a shape from the cache or computes it if not present.
@@ -51,15 +56,55 @@ object ShapeCache {
         return cache.get(key) { _ -> computeFunction() }
     }
 
-    internal fun getOrCompute(key: ShapeOperationCacheKey, computeFunction: () -> VoxelShape): VoxelShape {
-        return cache.get(key) { _ -> computeFunction() }
+    internal fun getOrComputeUnion(
+        first: VoxelShape,
+        second: VoxelShape,
+        computeFunction: () -> VoxelShape
+    ): VoxelShape {
+        val lastUnion = lastBinaryUnion.get()
+        lastUnion.resetIfStale(cacheGeneration.get())
+        if (!lastUnion.matches(first, second)) {
+            lastUnion.rememberSources(first, second)
+            return computeFunction()
+        }
+
+        val key = lastUnion.key ?: BinaryUnionKey(first, second).also { lastUnion.key = it }
+        cache.getIfPresent(key)?.let { return it }
+        return getOrComputeOperation(key, computeFunction)
     }
+
+    internal fun getOrComputeUnion(
+        shapes: Array<out VoxelShape>,
+        size: Int,
+        computeFunction: () -> VoxelShape
+    ): VoxelShape = getOrComputeOperation(MultipleUnionKey(shapes, size), computeFunction)
+
+    internal fun getOrComputeTransformation(
+        shape: VoxelShape,
+        transformation: VoxelShapeTransformation,
+        computeFunction: () -> VoxelShape
+    ): VoxelShape {
+        val last = lastTransformation.get()
+        last.resetIfStale(cacheGeneration.get())
+        val key = if (last.matches(shape, transformation)) {
+            requireNotNull(last.key)
+        } else {
+            TransformationKey(shape, transformation).also {
+                last.remember(shape, transformation, it)
+            }
+        }
+        return getOrComputeOperation(key, computeFunction)
+    }
+
+    private fun getOrComputeOperation(key: Any, computeFunction: () -> VoxelShape): VoxelShape =
+        cache.get(key) { computeFunction() }
 
     /**
      * Clears the entire cache.
      */
     fun clearCache() {
         cache.invalidateAll()
+        cacheGeneration.incrementAndGet()
     }
 
     /**
@@ -90,6 +135,58 @@ object ShapeCache {
     }
 }
 
+private class LastBinaryUnion {
+    private var generation = Long.MIN_VALUE
+    private var first: VoxelShape? = null
+    private var second: VoxelShape? = null
+    var key: BinaryUnionKey? = null
+
+    fun resetIfStale(currentGeneration: Long) {
+        if (generation == currentGeneration) return
+        generation = currentGeneration
+        first = null
+        second = null
+        key = null
+    }
+
+    fun matches(first: VoxelShape, second: VoxelShape): Boolean =
+        this.first === first && this.second === second
+
+    fun rememberSources(first: VoxelShape, second: VoxelShape) {
+        this.first = first
+        this.second = second
+        key = null
+    }
+}
+
+private class LastTransformation {
+    private var generation = Long.MIN_VALUE
+    private var shape: VoxelShape? = null
+    private var transformation: VoxelShapeTransformation? = null
+    var key: TransformationKey? = null
+
+    fun resetIfStale(currentGeneration: Long) {
+        if (generation == currentGeneration) return
+        generation = currentGeneration
+        shape = null
+        transformation = null
+        key = null
+    }
+
+    fun matches(shape: VoxelShape, transformation: VoxelShapeTransformation): Boolean =
+        this.shape === shape && this.transformation == transformation
+
+    fun remember(
+        shape: VoxelShape,
+        transformation: VoxelShapeTransformation,
+        key: TransformationKey
+    ) {
+        this.shape = shape
+        this.transformation = transformation
+        this.key = key
+    }
+}
+
 /**
  * A key for the shape cache. This combines the original shape's hashcode with
  * an operation identifier to create a unique key for each transformed shape.
@@ -104,9 +201,42 @@ data class ShapeCacheKey(
     val parameters: List<Any> = emptyList()
 )
 
-internal data class ShapeOperationCacheKey(
-    val originalShapeHash: Int,
-    val operationId: String,
-    val parameters: List<Any> = emptyList(),
-    val sourceShapes: List<VoxelShape>
-)
+private class BinaryUnionKey(
+    private val first: VoxelShape,
+    private val second: VoxelShape
+) {
+    private val hash = 31 * System.identityHashCode(first) + System.identityHashCode(second)
+
+    override fun hashCode(): Int = hash
+
+    override fun equals(other: Any?): Boolean =
+        other is BinaryUnionKey && first === other.first && second === other.second
+}
+
+private class TransformationKey(
+    private val shape: VoxelShape,
+    private val transformation: VoxelShapeTransformation
+) {
+    private val hash = 31 * System.identityHashCode(shape) + transformation.hashCode()
+
+    override fun hashCode(): Int = hash
+
+    override fun equals(other: Any?): Boolean =
+        other is TransformationKey &&
+            shape === other.shape &&
+            transformation == other.transformation
+}
+
+private class MultipleUnionKey(sourceShapes: Array<out VoxelShape>, size: Int) {
+    private val shapes = Array(size) { sourceShapes[it] }
+    private val hash = shapes.fold(1) { result, shape ->
+        31 * result + System.identityHashCode(shape)
+    }
+
+    override fun hashCode(): Int = hash
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is MultipleUnionKey || shapes.size != other.shapes.size) return false
+        return shapes.indices.all { shapes[it] === other.shapes[it] }
+    }
+}
