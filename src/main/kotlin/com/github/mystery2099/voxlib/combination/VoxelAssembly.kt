@@ -1,9 +1,8 @@
 package com.github.mystery2099.voxlib.combination
 
 import com.github.mystery2099.voxlib.optimization.ShapeCache
-import com.github.mystery2099.voxlib.optimization.ShapeOperationCacheKey
 import com.github.mystery2099.voxlib.optimization.ShapeSimplifier
-import net.minecraft.block.Block
+import com.github.mystery2099.voxlib.optimization.Minecraft1194ShapeOps
 import net.minecraft.util.function.BooleanBiFunction
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
@@ -15,6 +14,8 @@ import net.minecraft.util.shape.VoxelShapes
  * which are used to represent the collision and shape of objects in the game world.
  *
  * This class includes optimizations for better performance with complex shapes.
+ * Fixed block shapes should still be constructed once and stored in a field or
+ * companion object so shape queries perform no construction or cache lookup.
  */
 object VoxelAssembly {
     private const val MAX_CACHED_UNION_SHAPES = 16
@@ -39,13 +40,13 @@ object VoxelAssembly {
         maxX: Number,
         maxY: Number,
         maxZ: Number
-    ): VoxelShape = Block.createCuboidShape(
-        minX.toDouble(),
-        minY.toDouble(),
-        minZ.toDouble(),
-        maxX.toDouble(),
-        maxY.toDouble(),
-        maxZ.toDouble()
+    ): VoxelShape = VoxelShapes.cuboid(
+        minX.toDouble() / BLOCK_COORDINATE_SCALE,
+        minY.toDouble() / BLOCK_COORDINATE_SCALE,
+        minZ.toDouble() / BLOCK_COORDINATE_SCALE,
+        maxX.toDouble() / BLOCK_COORDINATE_SCALE,
+        maxY.toDouble() / BLOCK_COORDINATE_SCALE,
+        maxZ.toDouble() / BLOCK_COORDINATE_SCALE
     )
 
     /**
@@ -91,13 +92,7 @@ object VoxelAssembly {
 
         if (!useCache) return VoxelShapes.union(shape1, shape2)
 
-        val cacheKey = ShapeOperationCacheKey(
-            originalShapeHash = shape1.hashCode() * 31 + shape2.hashCode(),
-            operationId = "union",
-            sourceShapes = listOf(shape1, shape2)
-        )
-
-        return ShapeCache.getOrCompute(cacheKey) {
+        return ShapeCache.getOrComputeUnion(shape1, shape2) {
             VoxelShapes.union(shape1, shape2)
         }
     }
@@ -150,49 +145,37 @@ object VoxelAssembly {
         if (voxelShapes.isEmpty()) return VoxelShapes.empty()
         if (voxelShapes.size == 1) return voxelShapes[0]
 
-        // Filter out empty shapes for better performance
-        val nonEmptyShapes = voxelShapes.filter { !it.isEmpty }
-        if (nonEmptyShapes.isEmpty()) return VoxelShapes.empty()
-        if (nonEmptyShapes.size == 1) return nonEmptyShapes[0]
-
-        // Check for full cube which would make the result always a full cube
-        if (nonEmptyShapes.any { it == VoxelShapes.fullCube() }) return VoxelShapes.fullCube()
-        if (nonEmptyShapes.size > MAX_CACHED_UNION_SHAPES) return optimizedUnion(nonEmptyShapes)
-
-        // Cache small unions while avoiding retention of large shape graphs.
-        val combinedHash = nonEmptyShapes.fold(0) { acc, shape -> acc * 31 + shape.hashCode() }
-        val cacheKey = ShapeOperationCacheKey(
-            originalShapeHash = combinedHash,
-            operationId = "unionMultiple",
-            parameters = listOf(nonEmptyShapes.size),
-            sourceShapes = nonEmptyShapes
-        )
-
-        return ShapeCache.getOrCompute(cacheKey) {
-            optimizedUnion(nonEmptyShapes)
+        var nonEmptyCount = 0
+        for (shape in voxelShapes) {
+            if (shape === VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+            if (!shape.isEmpty) nonEmptyCount++
         }
-    }
+        if (nonEmptyCount == 0) return VoxelShapes.empty()
+        if (nonEmptyCount == 1) return voxelShapes.first { !it.isEmpty }
 
-    /**
-     * Optimized method to combine multiple shapes using union operation.
-     * This uses a divide-and-conquer approach for better performance with many shapes.
-     *
-     * @param shapes The list of shapes to combine.
-     * @return A single VoxelShape representing the union of all input shapes.
-     */
-    private fun optimizedUnion(shapes: List<VoxelShape>): VoxelShape {
-        if (shapes.isEmpty()) return VoxelShapes.empty()
-        if (shapes.size == 1) return shapes[0]
-
-        // Use a divide-and-conquer approach for better performance
-        return when {
-            shapes.size <= 4 -> shapes.reduce { a, b -> VoxelShapes.union(a, b) }
-            else -> {
-                val mid = shapes.size / 2
-                val left = optimizedUnion(shapes.subList(0, mid))
-                val right = optimizedUnion(shapes.subList(mid, shapes.size))
-                VoxelShapes.union(left, right)
+        val nonEmptyShapes = if (nonEmptyCount == voxelShapes.size) {
+            voxelShapes
+        } else {
+            Array(nonEmptyCount) { VoxelShapes.empty() }.also { filtered ->
+                var destinationIndex = 0
+                for (shape in voxelShapes) {
+                    if (!shape.isEmpty) filtered[destinationIndex++] = shape
+                }
             }
+        }
+        if (nonEmptyCount == 2) {
+            val first = nonEmptyShapes[0]
+            val second = nonEmptyShapes[1]
+            return ShapeCache.getOrComputeUnion(first, second) {
+                VoxelShapes.union(first, second)
+            }
+        }
+
+        if (nonEmptyCount > MAX_CACHED_UNION_SHAPES) {
+            return Minecraft1194ShapeOps.union(nonEmptyShapes, nonEmptyCount)
+        }
+        return ShapeCache.getOrComputeUnion(nonEmptyShapes, nonEmptyCount) {
+            Minecraft1194ShapeOps.union(nonEmptyShapes, nonEmptyCount)
         }
     }
 
@@ -293,4 +276,6 @@ object VoxelAssembly {
     fun VoxelShape.toBoundingBoxShape(): VoxelShape {
         return createBoundingBoxShape(this)
     }
+
+    private const val BLOCK_COORDINATE_SCALE = 16.0
 }

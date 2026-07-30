@@ -1,7 +1,7 @@
 package com.github.mystery2099.voxlib.rotation
 
+import com.github.mystery2099.voxlib.optimization.Minecraft1194ShapeOps
 import com.github.mystery2099.voxlib.optimization.ShapeCache
-import com.github.mystery2099.voxlib.optimization.ShapeOperationCacheKey
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 
@@ -72,7 +72,7 @@ object VoxelRotation {
      * @see rotate
      */
     fun VoxelShape.flipVertical(): VoxelShape {
-        return rotateVerticalWithCache(this, VoxelShapeTransformation.FLIP_VERTICAL)
+        return rotateWithCache(this, VoxelShapeTransformation.FLIP_VERTICAL)
     }
 
     /**
@@ -86,7 +86,7 @@ object VoxelRotation {
      * @see rotate
      */
     fun VoxelShape.flipZ(): VoxelShape {
-        return rotateVerticalWithCache(this, VoxelShapeTransformation.FLIP_Z)
+        return rotateWithCache(this, VoxelShapeTransformation.FLIP_Z)
     }
 
     /**
@@ -128,159 +128,10 @@ object VoxelRotation {
         if (shape.isEmpty) return VoxelShapes.empty()
         if (shape == VoxelShapes.fullCube()) return VoxelShapes.fullCube()
 
-        if (!useCache) return shape.rotateUncached(transformation)
+        if (!useCache) return Minecraft1194ShapeOps.transformBoxes(shape, transformation)
 
-        val cacheKey = ShapeOperationCacheKey(
-            originalShapeHash = shape.hashCode(),
-            operationId = transformation.name,
-            sourceShapes = listOf(shape)
-        )
-
-        return ShapeCache.getOrCompute(cacheKey) {
-            shape.rotateUncached(transformation)
+        return ShapeCache.getOrComputeTransformation(shape, transformation) {
+            Minecraft1194ShapeOps.transformBoxes(shape, transformation)
         }
-    }
-
-    /**
-     * Helper method to rotate a shape vertically with caching.
-     *
-     * @param shape The shape to rotate.
-     * @param transformation The transformation to apply.
-     * @param useCache Whether to use caching (default: true).
-     * @return The rotated shape.
-     */
-    private fun rotateVerticalWithCache(
-        shape: VoxelShape,
-        transformation: VoxelShapeTransformation,
-        useCache: Boolean = true
-    ): VoxelShape {
-        if (shape.isEmpty || shape == VoxelShapes.fullCube()) return shape
-
-        if (!useCache) return shape.rotateVerticalUncached(transformation)
-
-        val cacheKey = ShapeOperationCacheKey(
-            originalShapeHash = shape.hashCode(),
-            operationId = transformation.name,
-            sourceShapes = listOf(shape)
-        )
-
-        return ShapeCache.getOrCompute(cacheKey) {
-            shape.rotateVerticalUncached(transformation)
-        }
-    }
-
-    /**
-     * Rotates or flips the given VoxelShape using the specified transformation around the Y axis.
-     * This version doesn't use caching and is used internally by the cached methods.
-     *
-     * @param transformation The transformation to apply.
-     * @return A new VoxelShape after being rotated or flipped.
-     */
-    private fun VoxelShape.rotateUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        if (isEmpty || this == VoxelShapes.fullCube()) return this
-
-        val shapes = mutableListOf<VoxelShape>()
-        this@rotateUncached.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            val adjustedValues = adjustValues(transformation, minX, minZ, maxX, maxZ)
-            shapes.add(
-                VoxelShapes.cuboid(
-                adjustedValues[0], minY,
-                adjustedValues[1], adjustedValues[2], maxY, adjustedValues[3]
-                )
-            )
-        }
-
-        // Optimize the union operation for better performance
-        return optimizedUnion(shapes)
-    }
-
-    /**
-     * Rotates or flips the given VoxelShape vertically using the specified transformation.
-     * This version doesn't use caching and is used internally by the cached methods.
-     *
-     * @param transformation The transformation to apply.
-     * @return A new VoxelShape after being rotated or flipped vertically.
-     */
-    private fun VoxelShape.rotateVerticalUncached(transformation: VoxelShapeTransformation): VoxelShape {
-        if (isEmpty || this == VoxelShapes.fullCube()) return this
-
-        val shapes = mutableListOf<VoxelShape>()
-        this@rotateVerticalUncached.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            // Apply the appropriate transformation
-            val newCoords = when (transformation) {
-                VoxelShapeTransformation.FLIP_VERTICAL -> {
-                    // Flip around X axis (top to bottom)
-                    doubleArrayOf(minX, 1.0 - maxY, minZ, maxX, 1.0 - minY, maxZ)
-                }
-
-                VoxelShapeTransformation.FLIP_Z -> {
-                    // Flip around Z axis (front to back)
-                    doubleArrayOf(minX, minY, 1.0 - maxZ, maxX, maxY, 1.0 - minZ)
-                }
-
-                else -> {
-                    // This should not happen, but return original coordinates if it does
-                    doubleArrayOf(minX, minY, minZ, maxX, maxY, maxZ)
-                }
-            }
-
-            // Create a new cuboid with the transformed coordinates
-            shapes.add(
-                VoxelShapes.cuboid(
-                    newCoords[0], newCoords[1], newCoords[2],
-                    newCoords[3], newCoords[4], newCoords[5]
-                )
-            )
-        }
-
-        // Optimize the union operation for better performance
-        return optimizedUnion(shapes)
-    }
-
-    /**
-     * Optimized method to combine multiple shapes using union operation.
-     * This uses a divide-and-conquer approach for better performance with many shapes.
-     *
-     * @param shapes The list of shapes to combine.
-     * @return A single VoxelShape representing the union of all input shapes.
-     */
-    private fun optimizedUnion(shapes: List<VoxelShape>): VoxelShape {
-        if (shapes.isEmpty()) return VoxelShapes.empty()
-        if (shapes.size == 1) return shapes[0]
-
-        // Use a divide-and-conquer approach for better performance
-        return when {
-            shapes.size <= 4 -> shapes.reduce { a, b -> VoxelShapes.union(a, b) }
-            else -> {
-                val mid = shapes.size / 2
-                val left = optimizedUnion(shapes.subList(0, mid))
-                val right = optimizedUnion(shapes.subList(mid, shapes.size))
-                VoxelShapes.union(left, right)
-            }
-        }
-    }
-
-    /**
-     * Adjusts values based on the given transformation, simulating the rotation or flip around the Y axis.
-     *
-     * @param direction The transformation to apply.
-     * @param minX The minimum X-coordinate.
-     * @param minZ The minimum Z-coordinate.
-     * @param maxX The maximum X-coordinate.
-     * @param maxZ The maximum Z-coordinate.
-     *
-     * @return An array of adjusted values.
-     */
-    private fun adjustValues(
-        direction: VoxelShapeTransformation,
-        minX: Double,
-        minZ: Double,
-        maxX: Double,
-        maxZ: Double
-    ) = when (direction) {
-        VoxelShapeTransformation.FLIP_HORIZONTAL -> doubleArrayOf(1.0 - maxX, 1.0 - maxZ, 1.0 - minX, 1.0 - minZ)
-        VoxelShapeTransformation.ROTATE_RIGHT -> doubleArrayOf(minZ, 1.0 - maxX, maxZ, 1.0 - minX)
-        VoxelShapeTransformation.ROTATE_LEFT -> doubleArrayOf(1.0 - maxZ, minX, 1.0 - minZ, maxX)
-        else -> doubleArrayOf(minX, minZ, maxX, maxZ) // Should not happen
     }
 }
