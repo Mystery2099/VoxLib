@@ -12,7 +12,7 @@ A Minecraft Fabric library mod that provides utilities for manipulating, creatin
 - **Combine** shapes using operator overloading (`+`) and conditional assembly
 - **Transform** shapes with rotation and flipping utilities
 - **Simplify** your block collision and outline code
-- **Optimize** performance with high-performance caching (using Caffeine) and shape simplification utilities
+- **Reuse** repeated transformations with bounded caching and optionally create approximate, lower-detail outline shapes
 - **Debug** shapes with targeted outline and collision overlays
 
 ## Getting Started
@@ -176,7 +176,30 @@ val southFacingShape = northFacingShape.flip()
 val westFacingShape = northFacingShape.rotateLeft()
 ```
 
-### Performance Optimization
+### Performance Considerations
+
+VoxLib is primarily a convenience library. Its creation and combination APIs
+ultimately use Minecraft's built-in `VoxelShape` operations, so using VoxLib
+does not automatically make shape handling faster than vanilla.
+
+For fixed block shapes, prefer constructing the shape once and storing it in a
+static field or Kotlin companion object:
+
+```kotlin
+companion object {
+    private val TABLE_SHAPE = CommonShapes.createTable()
+}
+```
+
+This avoids both repeated construction and cache lookup overhead. VoxLib's
+bounded cache is most useful when the same transformation or small union is
+repeated with the same `VoxelShape` instances. Calls made with newly-created
+shape instances should not be expected to hit the cache.
+
+The simplification utilities below may reduce the cost of later outline
+queries, but they deliberately approximate the original geometry by filling
+some empty space. Do not use a simplified shape where exact collision,
+raycasting, or outline geometry is required.
 
 ```kotlin
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createOutlineShape
@@ -188,23 +211,29 @@ import com.github.mystery2099.voxlib.shapes.CommonShapes
 
 val complexShape = CommonShapes.createTable()
 
-// Reduce detail for an outline. Keep the original shape for collision checks.
+// Approximate the outline with fewer boxes.
+// Keep the original shape for collision checks and exact outlines.
 val outlineShape = complexShape.simplifyForOutline(maxBoxes = 8)
 
-// Or use one bounding box when an exact outline is not important.
+// Use one bounding box only when an approximate outline is acceptable.
 val boundingBoxShape = complexShape.toBoundingBoxShape()
 
-// Create a hollow outline directly.
-val efficientOutline = createOutlineShape(
+// Create a hollow shape directly. This is still composed with vanilla
+// VoxelShape operations and is not inherently faster than a solid cuboid.
+val hollowShape = createOutlineShape(
     minX = 0, minY = 0, minZ = 0,
     maxX = 16, maxY = 16, maxZ = 16,
     thickness = 1
 )
 
-// Rotations and small union operations are cached automatically.
-val rotatedShape = complexShape.rotateRight() // Uses cache automatically
-val combinedShape = union(complexShape, efficientOutline)
+// Repeating this operation with the same complexShape instance can use the cache.
+val rotatedShape = complexShape.rotateRight()
+val combinedShape = union(complexShape, hollowShape)
 ```
+
+The project does not currently include representative performance benchmarks.
+Measure with your actual shapes and call patterns before choosing VoxLib APIs
+for performance-sensitive paths.
 
 ### Debug Tools
 
