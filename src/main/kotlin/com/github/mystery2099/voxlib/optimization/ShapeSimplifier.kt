@@ -4,6 +4,7 @@ import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 import net.minecraft.util.math.Box
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
+import java.util.PriorityQueue
 
 /**
  * A utility class for simplifying complex VoxelShapes to improve performance.
@@ -50,46 +51,88 @@ object ShapeSimplifier {
             return shape
         }
 
-        // Merge boxes until we're under the limit
-        while (boxes.size > maxBoxes) {
-            mergeClosestBoxes(boxes)
+        val simplifiedBoxes = if (boxes.size in PRIORITY_QUEUE_BOX_RANGE) {
+            mergeClosestBoxesWithQueue(boxes, maxBoxes)
+        } else {
+            mergeClosestBoxesWithScan(boxes, maxBoxes)
+            boxes
         }
 
         // Rebuild the shape from simplified boxes using fold
-        return boxes.fold(VoxelShapes.empty()) { acc, box ->
+        return simplifiedBoxes.fold(VoxelShapes.empty()) { acc, box ->
             VoxelShapes.union(acc, VoxelShapes.cuboid(box))
         }
     }
 
-    /**
-     * Finds the two closest boxes in the list and merges them.
-     *
-     * @param boxes The list of boxes to process.
-     */
-    private fun mergeClosestBoxes(boxes: MutableList<Box>) {
-        if (boxes.size <= 1) return
+    private fun mergeClosestBoxesWithQueue(boxes: List<Box>, maxBoxes: Int): List<Box> {
+        val activeBoxes = boxes.mapIndexedTo(ArrayList(boxes.size * 2)) { position, box ->
+            ActiveBox(position, box)
+        }
+        val candidates = PriorityQueue(MergeCandidate.ORDER)
+        for (firstIndex in 0 until activeBoxes.size - 1) {
+            for (secondIndex in firstIndex + 1 until activeBoxes.size) {
+                candidates.add(MergeCandidate(activeBoxes[firstIndex], activeBoxes[secondIndex]))
+            }
+        }
 
-        var closestPair: Pair<Int, Int>? = null
-        var minDistance = Double.MAX_VALUE
+        var activeCount = activeBoxes.size
+        var nextPosition = activeBoxes.size
+        while (activeCount > maxBoxes) {
+            val closest = pollActiveCandidate(candidates)
+            closest.first.active = false
+            closest.second.active = false
 
-        // Find the closest pair of boxes
+            val merged = ActiveBox(
+                position = nextPosition++,
+                box = mergeBoxes(closest.first.box, closest.second.box)
+            )
+            for (activeBox in activeBoxes) {
+                if (activeBox.active) candidates.add(MergeCandidate(activeBox, merged))
+            }
+            activeBoxes.add(merged)
+            activeCount--
+        }
+
+        return activeBoxes.asSequence()
+            .filter { it.active }
+            .map { it.box }
+            .toList()
+    }
+
+    private fun pollActiveCandidate(candidates: PriorityQueue<MergeCandidate>): MergeCandidate {
+        while (true) {
+            val candidate = requireNotNull(candidates.poll()) {
+                "No merge candidate remained while simplifying a shape"
+            }
+            if (candidate.first.active && candidate.second.active) return candidate
+        }
+    }
+
+    private fun mergeClosestBoxesWithScan(boxes: MutableList<Box>, maxBoxes: Int) {
+        while (boxes.size > maxBoxes) {
+            mergeClosestPairWithScan(boxes)
+        }
+    }
+
+    private fun mergeClosestPairWithScan(boxes: MutableList<Box>) {
+        var closestFirst = 0
+        var closestSecond = 1
+        var minimumDistance = Double.MAX_VALUE
         for (i in 0 until boxes.size - 1) {
             for (j in i + 1 until boxes.size) {
                 val distance = calculateBoxDistance(boxes[i], boxes[j])
-                if (distance < minDistance) {
-                    minDistance = distance
-                    closestPair = Pair(i, j)
+                if (distance < minimumDistance) {
+                    minimumDistance = distance
+                    closestFirst = i
+                    closestSecond = j
                 }
             }
         }
 
-        // Merge the closest pair
-        closestPair?.let { (i, j) ->
-            val mergedBox = mergeBoxes(boxes[i], boxes[j])
-            boxes.removeAt(j) // Remove the second box first (higher index)
-            boxes.removeAt(i) // Then remove the first box
-            boxes.add(mergedBox) // Add the merged box
-        }
+        val mergedBox = mergeBoxes(boxes[closestFirst], boxes[closestSecond])
+        boxes.removeAt(closestSecond)
+        boxes.removeAt(closestFirst)
+        boxes.add(mergedBox)
     }
 
     /**
@@ -101,9 +144,6 @@ object ShapeSimplifier {
      * @return The distance between the boxes.
      */
     private fun calculateBoxDistance(box1: Box, box2: Box): Double {
-        if (box1.intersects(box2)) return 0.0
-
-        // Find minimum distance between box edges on each axis
         val dx = maxOf(0.0, maxOf(box1.minX - box2.maxX, box2.minX - box1.maxX))
         val dy = maxOf(0.0, maxOf(box1.minY - box2.maxY, box2.minY - box1.maxY))
         val dz = maxOf(0.0, maxOf(box1.minZ - box2.maxZ, box2.minZ - box1.maxZ))
@@ -127,6 +167,22 @@ object ShapeSimplifier {
             maxOf(box1.maxY, box2.maxY),
             maxOf(box1.maxZ, box2.maxZ)
         )
+    }
+
+    private class ActiveBox(val position: Int, val box: Box) {
+        var active = true
+    }
+
+    private class MergeCandidate(val first: ActiveBox, val second: ActiveBox) {
+        val distance = calculateBoxDistance(first.box, second.box)
+
+        companion object {
+            val ORDER = compareBy<MergeCandidate>(
+                { it.distance },
+                { it.first.position },
+                { it.second.position }
+            )
+        }
     }
 
     /**
@@ -177,4 +233,6 @@ object ShapeSimplifier {
             net.minecraft.util.function.BooleanBiFunction.ONLY_FIRST
         )
     }
+
+    private val PRIORITY_QUEUE_BOX_RANGE = 96..256
 }
