@@ -19,7 +19,35 @@ A Minecraft Fabric library mod that provides utilities for manipulating, creatin
 
 ### Installation
 
-VoxLib is published through GitHub Packages. Add the repository and dependency to your `build.gradle`:
+#### Modrinth Maven (Recommended)
+
+Every VoxLib release uploaded to Modrinth is automatically available through its Maven repository. Add the following to your `build.gradle`:
+
+```gradle
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
+}
+
+dependencies {
+    modImplementation "maven.modrinth:voxlib:VERSION"
+}
+```
+
+Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions), such as `1.4.0+1.19.4`. Modrinth does not require a username or access token.
+
+#### GitHub Packages
+
+GitHub Packages is also available if you prefer to use it:
 
 ```gradle
 repositories {
@@ -38,7 +66,7 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with the VoxLib version you want to use. GitHub Packages requires authentication, even when downloading a public package. You can either:
+Replace `VERSION` with the VoxLib version you want to use. GitHub Packages requires authentication, even for public packages. You can either:
 
 1. Set `gpr.user` and `gpr.key` in your Gradle user properties (`~/.gradle/gradle.properties`).
 2. Set the `GITHUB_ACTOR` and `GITHUB_TOKEN` environment variables.
