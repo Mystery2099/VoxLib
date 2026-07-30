@@ -14,6 +14,9 @@ import java.awt.Color
 
 /**
  * A utility object for debugging VoxelShapes by rendering them in the world.
+ * This class provides utilities for visualizing VoxelShapes in the game world,
+ * logging shape information, and comparing shapes for debugging purposes.
+ * Rendering methods are client-only and require a rendering context.
  */
 object VoxelShapeDebug {
 
@@ -64,6 +67,7 @@ object VoxelShapeDebug {
      * @param alpha The alpha value for transparency.
      * @param lineWidth The width of the lines (unused, kept for API compatibility).
      */
+    @Environment(EnvType.CLIENT)
     private fun drawBox(
         matrices: MatrixStack,
         vertexConsumer: VertexConsumer,
@@ -140,5 +144,32 @@ object VoxelShapeDebug {
         shape2.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
             println("    Box: ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
         }
+    }
+
+    /**
+     * Renders a VoxelShape using current debug settings from client config.
+     *
+     * @param matrices The MatrixStack to use for rendering.
+     * @param vertexConsumers The VertexConsumerProvider to use for rendering.
+     * @param shape The VoxelShape to render.
+     * @param pos The position at which to render the shape.
+     */
+    @Environment(EnvType.CLIENT)
+    fun renderShapeWithConfig(
+        matrices: MatrixStack,
+        vertexConsumers: VertexConsumerProvider,
+        shape: VoxelShape,
+        pos: BlockPos
+    ) {
+        if (!VoxelShapeDebugClient.isDebugModeEnabled()) return
+
+        renderShape(
+            matrices = matrices,
+            vertexConsumers = vertexConsumers,
+            shape = shape,
+            pos = pos,
+            color = VoxelShapeDebugClient.getDebugColor(),
+            alpha = VoxelShapeDebugClient.getAlpha()
+        )
     }
 }

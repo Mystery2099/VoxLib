@@ -13,56 +13,41 @@ A Minecraft Fabric library mod that provides utilities for manipulating, creatin
 - **Transform** shapes with rotation and flipping utilities
 - **Simplify** your block collision and outline code
 - **Optimize** performance with high-performance caching (using Caffeine) and shape simplification utilities
-- **Debug** shapes with visualization tools
+- **Debug** shapes with targeted outline and collision overlays
 
 ## Getting Started
 
 ### Installation
 
-There are several ways to add VoxLib as a dependency to your project:
+#### Modrinth Maven (Recommended)
 
-#### Option 1: CurseForge Maven (Recommended for Minecraft Mods)
-
-Add VoxLib as a dependency using CurseForge Maven in your `build.gradle` file:
+Every VoxLib release uploaded to Modrinth is automatically available through its Maven repository. Add the following to your `build.gradle`:
 
 ```gradle
 repositories {
-    maven {
-        name = "CurseForge"
-        url = "https://cursemaven.com"
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
     }
 }
 
 dependencies {
-    modImplementation "curse.maven:voxlib-PROJECT_ID:FILE_ID"
+    modImplementation "maven.modrinth:voxlib:VERSION"
 }
 ```
 
-Replace:
-- `PROJECT_ID` with the CurseForge project ID for VoxLib
-- `FILE_ID` with the file ID of the specific version you want to use
+Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions), such as `1.4.0+1.19.4`. Modrinth does not require a username or access token.
 
-You can find these IDs on the VoxLib CurseForge page under the "Files" tab.
+#### GitHub Packages
 
-#### Option 2: JitPack (Easiest Setup)
-
-JitPack makes it easy to use any GitHub repository as a dependency:
-
-```gradle
-repositories {
-    maven { url 'https://jitpack.io' }
-}
-
-dependencies {
-    modImplementation 'com.github.Mystery2099:VoxLib:TAG'
-}
-```
-
-Replace `TAG` with a version tag like `v1.4.0` or use `master-SNAPSHOT` for the latest development version.
-
-#### Option 3: GitHub Packages
-
-For projects that use GitHub Packages:
+GitHub Packages is also available if you prefer to use it:
 
 ```gradle
 repositories {
@@ -81,13 +66,32 @@ dependencies {
 }
 ```
 
-You'll need to:
-1. Set `gpr.user` and `gpr.key` in your `~/.gradle/gradle.properties` file, or
-2. Set `GITHUB_ACTOR` and `GITHUB_TOKEN` environment variables
+Replace `VERSION` with the VoxLib version you want to use. GitHub Packages requires authentication, even for public packages. You can either:
+
+1. Set `gpr.user` and `gpr.key` in your Gradle user properties (`~/.gradle/gradle.properties`).
+2. Set the `GITHUB_ACTOR` and `GITHUB_TOKEN` environment variables.
+
+The token needs the `read:packages` scope. Avoid committing it to your project.
 
 For more information on GitHub Packages, see [Working with a GitHub Packages Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#using-a-published-package)
 
+VoxLib also requires Fabric API and Fabric Language Kotlin at runtime. Use versions compatible with Minecraft 1.19.4.
+
+### Building from Source
+
+If you would rather use a local build:
+
+```shell
+./gradlew build
+```
+
+The finished mod JAR will be written to `build/libs`. You can also run `./gradlew publishToMavenLocal` and use `mavenLocal()` while developing another mod.
+
 ## Usage Examples
+
+### Debugging Targeted Blocks
+
+With Mod Menu installed, open the VoxLib settings and enable **Debug Mode**. You can then show the outline shape, collision shape, or both for the block under your crosshair. The overlay uses the color and transparency configured on the same screen.
 
 ### Creating Shapes
 
@@ -102,6 +106,7 @@ val baseShape = createCuboidShape(0, 0, 0, 16, 1, 16) // A slab at the bottom of
 
 ```kotlin
 import com.github.mystery2099.voxlib.shapes.CommonShapes
+import net.minecraft.util.math.Direction
 
 // Common pre-defined shapes for quick use
 val slab = CommonShapes.createSlab(8)           // Half-height slab
@@ -122,6 +127,7 @@ val fenceWithSides = CommonShapes.createFenceConnections(
 
 ```kotlin
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
 
 // Create individual shapes
 val base = createCuboidShape(0, 0, 0, 16, 1, 16)  // Bottom slab
@@ -137,6 +143,7 @@ val tableShape = base + post + top
 ```kotlin
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.appendShapes
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
+import net.minecraft.util.shape.VoxelShape
 
 fun createChairShape(hasBackrest: Boolean): VoxelShape {
     val seat = createCuboidShape(2, 8, 2, 14, 10, 14)  // Seat
@@ -144,7 +151,7 @@ fun createChairShape(hasBackrest: Boolean): VoxelShape {
 
     return seat appendShapes {
         // Only add backrest if the condition is true
-        createCuboidShape(3, 10, 12, 13, 20, 14) case hasBackrest
+        createCuboidShape(3, 10, 12, 13, 16, 14) case hasBackrest
 
         // Always add legs
         append(legs)
@@ -155,6 +162,7 @@ fun createChairShape(hasBackrest: Boolean): VoxelShape {
 ### Rotating Shapes
 
 ```kotlin
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotateLeft
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotateRight
 import com.github.mystery2099.voxlib.rotation.VoxelRotation.flip
@@ -171,34 +179,31 @@ val westFacingShape = northFacingShape.rotateLeft()
 ### Performance Optimization
 
 ```kotlin
-import com.github.mystery2099.voxlib.combination.VoxelAssembly.createSimplifiedOutlineShape
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createOutlineShape
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.simplifyForOutline
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.toBoundingBoxShape
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.union
+import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotateRight
+import com.github.mystery2099.voxlib.shapes.CommonShapes
 
-// Create a complex collision shape
-val complexCollisionShape = createComplexShape()
+val complexShape = CommonShapes.createTable()
 
-// Create a simplified outline shape for better performance
-val outlineShape = complexCollisionShape.simplifyForOutline(maxBoxes = 8)
+// Reduce detail for an outline. Keep the original shape for collision checks.
+val outlineShape = complexShape.simplifyForOutline(maxBoxes = 8)
 
-// Or create a bounding box shape (even simpler)
-val boundingBoxShape = complexCollisionShape.toBoundingBoxShape()
+// Or use one bounding box when an exact outline is not important.
+val boundingBoxShape = complexShape.toBoundingBoxShape()
 
-// Create an efficient hollow outline shape directly
+// Create a hollow outline directly.
 val efficientOutline = createOutlineShape(
     minX = 0, minY = 0, minZ = 0,
     maxX = 16, maxY = 16, maxZ = 16,
     thickness = 1
 )
 
-// All transformations use Caffeine caching by default for better performance
+// Rotations and small union operations are cached automatically.
 val rotatedShape = complexShape.rotateRight() // Uses cache automatically
-
-// Caffeine provides automatic cache eviction and time-based expiration
-// so you don't need to worry about memory leaks
-
-// You can also use the VoxelAssembly utilities for optimized shape operations
-val optimizedUnion = VoxelAssembly.union(shape1, shape2, shape3) // Optimized union operation
+val combinedShape = union(complexShape, efficientOutline)
 ```
 
 ### Debug Tools
@@ -248,3 +253,15 @@ These logging functions work on both client and server environments.
 ## Documentation
 
 For full documentation of all available utilities, see the KDoc comments in the source code or visit the [GitHub repository](https://github.com/Mystery2099/VoxLib).
+
+## Compatibility
+
+- Minecraft 1.19.4
+- Fabric Loader 0.18.4 or newer
+- Java 17 or newer
+- Client and dedicated server
+- Mod Menu is optional and only needed for the in-game debug settings screen
+
+## License
+
+VoxLib is available under the [Minecraft Mod Public License 1.0.1](LICENSE).

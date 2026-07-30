@@ -4,9 +4,7 @@
 	"version": "${version}",
 	"name": "Mystery2099's VoxLib",
 	"description": "A library that provides utilities for manipulating, creating, and rotating voxel shapes in Minecraft modding, with performance optimizations and common shape patterns.",
-	"authors": [
-		"Mystery2099"
-	],
+	"authors": ["Mystery2099"],
 	"contact": {
 		"homepage": "https://github.com/Mystery2099/VoxLib",
 		"sources": "https://github.com/Mystery2099/VoxLib",
@@ -21,6 +19,18 @@
 				"value": "com.github.mystery2099.voxlib.VoxLib",
 				"adapter": "kotlin"
 			}
+		],
+		"client": [
+			{
+				"value": "com.github.mystery2099.voxlib.VoxLibClient",
+				"adapter": "kotlin"
+			}
+		],
+		"modmenu": [
+			{
+				"value": "com.github.mystery2099.voxlib.config.VoxLibModMenu",
+				"adapter": "kotlin"
+			}
 		]
 	},
 	"depends": {
@@ -30,11 +40,12 @@
 		"fabric-api": ">=0.87.2+1.19.4",
 		"fabric-language-kotlin": ">=1.13.8+kotlin.2.3.0"
 	},
+	"suggests": {
+		"modmenu": ">=6.2.3"
+	},
 	"custom": {
 		"modmenu": {
-			"badges": [
-				"library"
-			]
+			"badges": ["library"]
 		}
 	}
 }

@@ -1,7 +1,7 @@
 package com.github.mystery2099.voxlib.rotation
 
 import com.github.mystery2099.voxlib.optimization.ShapeCache
-import com.github.mystery2099.voxlib.optimization.ShapeCacheKey
+import com.github.mystery2099.voxlib.optimization.ShapeOperationCacheKey
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 
@@ -130,9 +130,10 @@ object VoxelRotation {
 
         if (!useCache) return shape.rotateUncached(transformation)
 
-        val cacheKey = ShapeCacheKey(
+        val cacheKey = ShapeOperationCacheKey(
             originalShapeHash = shape.hashCode(),
-            operationId = transformation.name
+            operationId = transformation.name,
+            sourceShapes = listOf(shape)
         )
 
         return ShapeCache.getOrCompute(cacheKey) {
@@ -157,9 +158,10 @@ object VoxelRotation {
 
         if (!useCache) return shape.rotateVerticalUncached(transformation)
 
-        val cacheKey = ShapeCacheKey(
+        val cacheKey = ShapeOperationCacheKey(
             originalShapeHash = shape.hashCode(),
-            operationId = transformation.name
+            operationId = transformation.name,
+            sourceShapes = listOf(shape)
         )
 
         return ShapeCache.getOrCompute(cacheKey) {

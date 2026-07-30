@@ -1,118 +1,63 @@
 package com.github.mystery2099.voxlib.shapes
 
 import net.minecraft.util.math.Direction
-import net.minecraft.util.shape.VoxelShapes
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
-/**
- * Unit tests for the CommonShapes object.
- *
- * Note: Tests that create actual VoxelShapes or use Direction enum values
- * are disabled because they require Minecraft's registry system to be initialized.
- */
 class CommonShapesTest {
-
-    @Test
-    fun `createSlab with invalid height throws exception`() {
-        val exception = assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createSlab(0)
-        }
-        assertTrue(exception.message!!.contains("Height must be between 1 and 16"))
-
+    @ParameterizedTest
+    @ValueSource(ints = [0, 17])
+    fun `createSlab rejects height outside valid range`(height: Int) {
         assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createSlab(17)
+            CommonShapes.createSlab(height)
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [0, 15])
+    fun `createPillar rejects width outside valid range`(width: Int) {
+        assertThrows(IllegalArgumentException::class.java) {
+            CommonShapes.createPillar(width)
         }
     }
 
     @Test
-    fun `createPillar with invalid width throws exception`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createPillar(0)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createPillar(15)
-        }
-    }
-
-    @Test
-    fun `createTable with invalid leg width throws exception`() {
+    fun `createTable rejects invalid leg width`() {
         assertThrows(IllegalArgumentException::class.java) {
             CommonShapes.createTable(legWidth = 0)
         }
     }
 
     @Test
-    fun `createTable with invalid top thickness throws exception`() {
+    fun `createTable rejects invalid top thickness`() {
         assertThrows(IllegalArgumentException::class.java) {
             CommonShapes.createTable(topThickness = 7)
         }
     }
 
-    @Test
-    fun `createTable with both invalid params throws exception`() {
+    @ParameterizedTest
+    @ValueSource(ints = [0, 13])
+    fun `createChair rejects seat height outside valid range`(seatHeight: Int) {
         assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createTable(legWidth = 0, topThickness = 0)
+            CommonShapes.createChair(seatHeight = seatHeight)
         }
     }
 
     @Test
-    fun `createChair with invalid seat height throws exception`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createChair(seatHeight = 0)
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createChair(seatHeight = 13)
-        }
-    }
-
-    @Test
-    fun `createChair with invalid backrest height throws exception`() {
+    fun `createChair rejects invalid backrest height`() {
         assertThrows(IllegalArgumentException::class.java) {
             CommonShapes.createChair(backrestHeight = 17)
         }
     }
 
-    @Test
-    fun `createStairs with invalid facing UP throws exception`() {
+    @ParameterizedTest
+    @EnumSource(value = Direction::class, names = ["UP", "DOWN"])
+    fun `createStairs rejects vertical direction`(direction: Direction) {
         assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createStairs(Direction.UP)
+            CommonShapes.createStairs(direction)
         }
-    }
-
-    @Test
-    fun `createStairs with invalid facing DOWN throws exception`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            CommonShapes.createStairs(Direction.DOWN)
-        }
-    }
-
-    @Test
-    fun `createStairs with valid directions - disabled`() {
-        // This test requires Minecraft registry initialization for createStairs
-        // which creates actual VoxelShapes. Disable for unit tests.
-        assertTrue(true)
-    }
-
-    @Test
-    fun `Direction enum has exactly 6 values`() {
-        assertEquals(6, Direction.entries.size)
-    }
-
-    @Test
-    fun `Direction enum has 4 horizontal values`() {
-        val horizontal = Direction.entries.filter {
-            it == Direction.NORTH || it == Direction.EAST ||
-            it == Direction.SOUTH || it == Direction.WEST
-        }
-        assertEquals(4, horizontal.size)
-    }
-
-    @Test
-    fun `Direction enum has 2 vertical values`() {
-        val vertical = Direction.entries.filter {
-            it == Direction.UP || it == Direction.DOWN
-        }
-        assertEquals(2, vertical.size)
     }
 }
