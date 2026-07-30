@@ -121,7 +121,7 @@ object VoxelShapeDebugClient {
             matrices.pop()
         }
 
-        return !config.showTargetedOutline
+        return false
     }
 
     private fun shapesDiffer(first: VoxelShape?, second: VoxelShape): Boolean =
