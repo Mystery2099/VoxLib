@@ -11,8 +11,8 @@ creating, and rotating voxel shapes in your code!
 
 VoxLib is a lightweight Fabric library that simplifies working with Minecraft's
 `VoxelShape` API. It provides intuitive extensions and utilities for creating,
-combining, transforming, and optimizing voxel shapes—perfect for custom blocks
-and items that need precise collision or outline shapes.
+combining, transforming, and reusing voxel shapes—perfect for custom blocks and
+items that need precise collision or outline shapes.
 
 ## Features
 
@@ -45,11 +45,16 @@ val eastFacing = northFacing.rotateLeft()
 val opposite = shape.flip()
 ```
 
-### Optimize
+### Reuse and Simplify
 
-- Caffeine-based caching (500 entries, 10-min expiration)
-- Shape simplification utilities
-- Divide-and-conquer union algorithms
+- Bounded caching for repeated transformations and binary unions
+- Memoized common-shape factories
+- Optional approximate shape simplification utilities
+- Allocation-conscious balanced unions for larger collections
+
+VoxLib is convenience-first and still delegates its core shape operations to
+Minecraft. It is not a blanket replacement for vanilla performance practices;
+fixed shapes should normally be stored as constants.
 
 ### Debug (Client)
 
