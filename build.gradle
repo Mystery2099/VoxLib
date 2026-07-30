@@ -4,6 +4,7 @@ plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
 	id "org.jetbrains.kotlin.jvm" version "2.3.0"
+	id 'me.champeau.jmh' version '0.7.3'
 }
 
 version = project.mod_version
@@ -110,6 +111,9 @@ jar {
 // Java configuration
 java {
 	withSourcesJar()
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
 }
@@ -120,6 +124,129 @@ tasks.test {
 	testLogging {
 		events "passed", "skipped", "failed"
 	}
+}
+
+jmh {
+	jmhVersion = project.jmh_version
+	benchmarkMode = ['avgt']
+	timeUnit = 'ns'
+	warmupIterations = 3
+	warmup = '500ms'
+	iterations = 5
+	timeOnIteration = '500ms'
+	fork = 3
+	profilers = ['gc']
+	jvmArgsAppend = ['-Dorg.apache.logging.log4j.simplelog.StatusLogger.level=OFF']
+	resultFormat = 'JSON'
+	resultsFile = project.file("${layout.buildDirectory.get()}/reports/jmh/results.json")
+	humanOutputFile = project.file("${layout.buildDirectory.get()}/reports/jmh/human.txt")
+	failOnError = true
+	zip64 = true
+	duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('verifyPerformance') {
+	dependsOn tasks.jmh
+	doLast {
+		def reportFile = layout.buildDirectory.file('reports/jmh/results.json').get().asFile
+		def results = new groovy.json.JsonSlurper().parse(reportFile)
+		def findResult = { suffix, parameters ->
+			def result = results.find {
+				it.benchmark.endsWith(suffix) &&
+					parameters.every { key, value -> it.params[key] == value.toString() }
+			}
+			if (result == null) {
+				throw new GradleException("Missing JMH result for ${suffix} with ${parameters}")
+			}
+			return result
+		}
+		def findScore = { suffix, parameters, metric ->
+			def result = findResult(suffix, parameters)
+			def metricResult = metric == 'primary'
+				? result.primaryMetric
+				: result.secondaryMetrics[metric]
+			if (metricResult == null) {
+				throw new GradleException(
+					"Missing JMH metric ${metric} for ${suffix} with ${parameters}"
+				)
+			}
+			return metricResult.score as double
+		}
+		def requireMetricAtMost = {
+			candidate,
+			baseline,
+			parameters,
+			ratio,
+			metric ->
+			def candidateScore = findScore(candidate, parameters, metric)
+			def baselineScore = findScore(baseline, parameters, metric)
+			if (candidateScore > baselineScore * ratio) {
+				throw new GradleException(
+					"${candidate} ${metric} was ${candidateScore / baselineScore}x " +
+						"${baseline}; limit is ${ratio}x"
+				)
+			}
+		}
+		def requireAtMost = { candidate, baseline, parameters, ratio ->
+			requireMetricAtMost(candidate, baseline, parameters, ratio, 'primary')
+		}
+
+		requireAtMost('voxLibIntegralCuboid', 'vanillaIntegralCuboid', [:], 1.10)
+		requireAtMost('voxLibFractionalCuboid', 'vanillaFractionalCuboid', [:], 1.10)
+		requireAtMost('voxLibColdBinaryUnion', 'vanillaColdBinaryUnion', [boxCount: 8], 1.10)
+		requireAtMost('voxLibColdMultiUnion', 'vanillaColdMultiUnion', [shapeCount: 32], 1.10)
+		requireAtMost('voxLibWarmBinaryUnion', 'vanillaBinaryUnion', [boxCount: 8], 0.50)
+		requireAtMost(
+			'voxLibWarmRotation',
+			'legacyUncachedRotation',
+			[boxCount: 32, transformation: 'ROTATE_RIGHT'],
+			0.50
+		)
+		requireAtMost('table', 'legacyTable', [:], 0.50)
+		requireAtMost('chair', 'legacyChair', [:], 0.50)
+		requireMetricAtMost(
+			'voxLibMultiUnion',
+			'vanillaMultiUnion',
+			[shapeCount: 32],
+			1.00,
+			'gc.alloc.rate.norm'
+		)
+		requireMetricAtMost(
+			'voxLibUncachedRotationCore',
+			'legacyUncachedRotationCore',
+			[:],
+			1.00,
+			'gc.alloc.rate.norm'
+		)
+		requireMetricAtMost(
+			'specializedCachedUnion',
+			'legacyCachedUnion',
+			[:],
+			0.50,
+			'gc.alloc.rate.norm'
+		)
+		requireMetricAtMost(
+			'specializedCachedRotation',
+			'legacyCachedRotation',
+			[:],
+			0.50,
+			'gc.alloc.rate.norm'
+		)
+		[32, 64, 256].each { boxCount ->
+			requireAtMost(
+				'voxLibSimplifier',
+				'legacySimplifier',
+				[boxCount: boxCount, maxBoxes: 8],
+				1.00
+			)
+		}
+	}
+}
+
+tasks.register('performanceCheck') {
+	group = 'verification'
+	description = 'Runs correctness tests, JMH benchmarks, and performance acceptance gates.'
+	dependsOn tasks.test, tasks.verifyPerformance
 }
 
 // Maven publication configuration
