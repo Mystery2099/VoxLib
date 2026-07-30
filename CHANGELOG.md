@@ -5,6 +5,22 @@ All notable changes to VoxLib will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-07-30
+
+### Added
+
+- Added independent targeted block outline and collision shape overlays
+
+### Changed
+
+- Added ModMenu to local Fabric runtime testing
+
+### Fixed
+
+- Preserved configuration defaults when loading partial JSON
+- Serialized configuration updates and file writes
+- Kept debug shape transparency independent from configured RGB color
+
 ## [1.5.0] - 2025-12-30
 
 ### Added

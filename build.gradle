@@ -55,6 +55,7 @@ dependencies {
 
 	// Optional ModMenu integration
 	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
 
 	// Testing dependencies
 	testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.2"

@@ -4,9 +4,15 @@ import com.github.mystery2099.voxlib.config.VoxLibConfig
 import com.github.mystery2099.voxlib.optimization.ShapeCache
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
+import net.minecraft.block.ShapeContext
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
-import kotlin.math.roundToInt
+import net.minecraft.util.function.BooleanBiFunction
+import net.minecraft.util.shape.VoxelShape
+import net.minecraft.util.shape.VoxelShapes
+import java.awt.Color
 
 /**
  * Client-only entry point for VoxLib debug features.
@@ -52,16 +58,8 @@ object VoxelShapeDebugClient {
      * Gets the current debug color.
      */
     fun getDebugColor(): java.awt.Color {
-        val config = getConfig()
-        val rgb = config.debugShapeColor and 0xFFFFFF
-        val alpha = (config.debugShapeColor shr 24) and 0xFF
-        val scaledAlpha = (alpha * config.debugShapeAlpha).roundToInt().coerceIn(0, 255)
-        return java.awt.Color(
-            (rgb shr 16) and 0xFF,
-            (rgb shr 8) and 0xFF,
-            rgb and 0xFF,
-            scaledAlpha
-        )
+        val rgb = getConfig().debugShapeColor and 0xFFFFFF
+        return java.awt.Color(rgb)
     }
 
     /**
@@ -79,5 +77,53 @@ object VoxelShapeDebugClient {
      */
     fun initialize() {
         VoxLibConfig.getOrCreate()
+        WorldRenderEvents.BLOCK_OUTLINE.register { context, target ->
+            renderTargetedShapes(context, target)
+        }
     }
+
+    private fun renderTargetedShapes(
+        context: WorldRenderContext,
+        target: WorldRenderContext.BlockOutlineContext
+    ): Boolean {
+        val config = getConfig()
+        if (!config.debugModeEnabled || (!config.showTargetedOutline && !config.showTargetedCollision)) {
+            return true
+        }
+
+        val consumers = context.consumers() ?: return true
+        val pos = target.blockPos()
+        val state = target.blockState()
+        val shapeContext = ShapeContext.of(target.entity())
+        val outlineShape = if (config.showTargetedOutline) {
+            state.getOutlineShape(context.world(), pos, shapeContext)
+        } else {
+            null
+        }
+        val collisionShape = if (config.showTargetedCollision) {
+            state.getCollisionShape(context.world(), pos, shapeContext)
+        } else {
+            null
+        }
+
+        val matrices = context.matrixStack()
+        val color = Color(config.debugShapeColor and 0xFFFFFF)
+        matrices.push()
+        matrices.translate(-target.cameraX(), -target.cameraY(), -target.cameraZ())
+        try {
+            outlineShape?.let {
+                VoxelShapeDebug.renderShape(matrices, consumers, it, pos, color, config.debugShapeAlpha)
+            }
+            if (collisionShape != null && shapesDiffer(outlineShape, collisionShape)) {
+                VoxelShapeDebug.renderShape(matrices, consumers, collisionShape, pos, color, config.debugShapeAlpha)
+            }
+        } finally {
+            matrices.pop()
+        }
+
+        return !config.showTargetedOutline
+    }
+
+    private fun shapesDiffer(first: VoxelShape?, second: VoxelShape): Boolean =
+        first == null || VoxelShapes.matchesAnywhere(first, second, BooleanBiFunction.NOT_SAME)
 }

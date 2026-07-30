@@ -13,7 +13,7 @@ A Minecraft Fabric library mod that provides utilities for manipulating, creatin
 - **Transform** shapes with rotation and flipping utilities
 - **Simplify** your block collision and outline code
 - **Optimize** performance with high-performance caching (using Caffeine) and shape simplification utilities
-- **Debug** shapes with visualization tools
+- **Debug** shapes with targeted outline and collision overlays
 
 ## Getting Started
 
@@ -88,6 +88,10 @@ You'll need to:
 For more information on GitHub Packages, see [Working with a GitHub Packages Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#using-a-published-package)
 
 ## Usage Examples
+
+### Debugging Targeted Blocks
+
+With ModMenu installed, open the VoxLib settings, enable **Debug Mode**, then enable **Target Outline** and/or **Target Collision**. VoxLib will render the selected shapes for the block under the crosshair using the configured color and alpha.
 
 ### Creating Shapes
 

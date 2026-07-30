@@ -16,7 +16,7 @@ object VoxLib : ModInitializer {
     /**
      * The current version of VoxLib.
      */
-    const val VERSION = "1.5.0+1.19.4"
+    const val VERSION = "1.6.0+1.19.4"
 
     /**
      * The Minecraft version this mod is built for.

@@ -15,17 +15,32 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.lite
     override fun init() {
         super.init()
 
-        addDrawableChild(createDebugModeButton(height / 2 - 70))
-        addDrawableChild(createColorButton(height / 2 - 45))
-        addDrawableChild(createAlphaButton(height / 2 - 20))
-        addDrawableChild(createResetButton(height / 2 + 20))
-        addDrawableChild(createDoneButton(height / 2 + 45))
+        val startY = height / 2 - 82
+        addDrawableChild(createDebugModeButton(startY))
+        addDrawableChild(createTargetOutlineButton(startY + 24))
+        addDrawableChild(createTargetCollisionButton(startY + 48))
+        addDrawableChild(createColorButton(startY + 72))
+        addDrawableChild(createAlphaButton(startY + 96))
+        addDrawableChild(createResetButton(startY + 128))
+        addDrawableChild(createDoneButton(startY + 152))
     }
 
     private fun createDebugModeButton(y: Int): ButtonWidget =
         button(debugModeText(), y) { widget ->
             update(config.copy(debugModeEnabled = !config.debugModeEnabled))
             widget.message = debugModeText()
+        }
+
+    private fun createTargetOutlineButton(y: Int): ButtonWidget =
+        button(targetOutlineText(), y) { widget ->
+            update(config.copy(showTargetedOutline = !config.showTargetedOutline))
+            widget.message = targetOutlineText()
+        }
+
+    private fun createTargetCollisionButton(y: Int): ButtonWidget =
+        button(targetCollisionText(), y) { widget ->
+            update(config.copy(showTargetedCollision = !config.showTargetedCollision))
+            widget.message = targetCollisionText()
         }
 
     private fun createColorButton(y: Int): ButtonWidget =
@@ -73,6 +88,12 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.lite
 
     private fun debugModeText(): Text =
         Text.literal("Debug Mode: ${if (config.debugModeEnabled) "ON" else "OFF"}")
+
+    private fun targetOutlineText(): Text =
+        Text.literal("Target Outline: ${if (config.showTargetedOutline) "ON" else "OFF"}")
+
+    private fun targetCollisionText(): Text =
+        Text.literal("Target Collision: ${if (config.showTargetedCollision) "ON" else "OFF"}")
 
     private fun colorText(): Text {
         val name = COLOR_OPTIONS.firstOrNull { it.value == config.debugShapeColor }?.name ?: "Custom"
