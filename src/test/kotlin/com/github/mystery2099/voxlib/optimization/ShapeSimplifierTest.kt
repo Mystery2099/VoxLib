@@ -94,7 +94,7 @@ class ShapeSimplifierTest {
 
     @Test
     fun `hybrid simplifier matches legacy simplifier for deterministic shapes`() {
-        for (boxCount in listOf(16, 32, 64, 128)) {
+        for (boxCount in listOf(16, 32, 64, 128, 256)) {
             val shape = (0 until boxCount)
                 .map { index ->
                     val x = (index % 8) * 0.125

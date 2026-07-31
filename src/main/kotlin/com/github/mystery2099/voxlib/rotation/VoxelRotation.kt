@@ -126,7 +126,7 @@ object VoxelRotation {
     ): VoxelShape {
         // Handle special cases for better performance
         if (shape.isEmpty) return VoxelShapes.empty()
-        if (shape == VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+        if (shape === VoxelShapes.fullCube()) return VoxelShapes.fullCube()
 
         if (!useCache) return Minecraft1194ShapeOps.transformBoxes(shape, transformation)
 

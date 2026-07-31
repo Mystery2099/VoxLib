@@ -3,7 +3,9 @@ package com.github.mystery2099.voxlib.benchmark;
 import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
@@ -42,6 +44,49 @@ final class LegacyShapeOperations {
         VoxelShape result = VoxelShapes.empty();
         for (Box box : boxes) {
             result = VoxelShapes.union(result, VoxelShapes.cuboid(box));
+        }
+        return result;
+    }
+
+    static VoxelShape objectQueueSimplify(VoxelShape shape, int maxBoxes) {
+        List<ActiveBox> boxes = new ArrayList<>();
+        shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) ->
+            boxes.add(new ActiveBox(
+                boxes.size(),
+                new Box(minX, minY, minZ, maxX, maxY, maxZ)
+            ))
+        );
+        PriorityQueue<MergeCandidate> candidates = new PriorityQueue<>(MergeCandidate.ORDER);
+        for (int first = 0; first < boxes.size() - 1; first++) {
+            for (int second = first + 1; second < boxes.size(); second++) {
+                candidates.add(new MergeCandidate(boxes.get(first), boxes.get(second)));
+            }
+        }
+
+        int activeCount = boxes.size();
+        int nextPosition = boxes.size();
+        while (activeCount > maxBoxes) {
+            MergeCandidate closest = pollActiveCandidate(candidates);
+            closest.first.active = false;
+            closest.second.active = false;
+            ActiveBox merged = new ActiveBox(
+                nextPosition++,
+                encompass(closest.first.box, closest.second.box)
+            );
+            for (ActiveBox box : boxes) {
+                if (box.active) {
+                    candidates.add(new MergeCandidate(box, merged));
+                }
+            }
+            boxes.add(merged);
+            activeCount--;
+        }
+
+        VoxelShape result = VoxelShapes.empty();
+        for (ActiveBox box : boxes) {
+            if (box.active) {
+                result = VoxelShapes.union(result, VoxelShapes.cuboid(box.box));
+            }
         }
         return result;
     }
@@ -231,5 +276,44 @@ final class LegacyShapeOperations {
             Math.max(first.maxY, second.maxY),
             Math.max(first.maxZ, second.maxZ)
         );
+    }
+
+    private static MergeCandidate pollActiveCandidate(
+        PriorityQueue<MergeCandidate> candidates
+    ) {
+        while (true) {
+            MergeCandidate candidate = candidates.remove();
+            if (candidate.first.active && candidate.second.active) {
+                return candidate;
+            }
+        }
+    }
+
+    private static final class ActiveBox {
+        final int position;
+        final Box box;
+        boolean active = true;
+
+        ActiveBox(int position, Box box) {
+            this.position = position;
+            this.box = box;
+        }
+    }
+
+    private static final class MergeCandidate {
+        static final Comparator<MergeCandidate> ORDER = Comparator
+            .comparingDouble((MergeCandidate candidate) -> candidate.distance)
+            .thenComparingInt(candidate -> candidate.first.position)
+            .thenComparingInt(candidate -> candidate.second.position);
+
+        final ActiveBox first;
+        final ActiveBox second;
+        final double distance;
+
+        MergeCandidate(ActiveBox first, ActiveBox second) {
+            this.first = first;
+            this.second = second;
+            this.distance = LegacyShapeOperations.distance(first.box, second.box);
+        }
     }
 }

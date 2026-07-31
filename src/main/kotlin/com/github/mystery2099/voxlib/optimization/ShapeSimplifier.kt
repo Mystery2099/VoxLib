@@ -4,7 +4,6 @@ import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 import net.minecraft.util.math.Box
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
-import java.util.PriorityQueue
 
 /**
  * A utility class for simplifying complex VoxelShapes to improve performance.
@@ -64,49 +63,8 @@ object ShapeSimplifier {
         }
     }
 
-    private fun mergeClosestBoxesWithQueue(boxes: List<Box>, maxBoxes: Int): List<Box> {
-        val activeBoxes = boxes.mapIndexedTo(ArrayList(boxes.size * 2)) { position, box ->
-            ActiveBox(position, box)
-        }
-        val candidates = PriorityQueue(MergeCandidate.ORDER)
-        for (firstIndex in 0 until activeBoxes.size - 1) {
-            for (secondIndex in firstIndex + 1 until activeBoxes.size) {
-                candidates.add(MergeCandidate(activeBoxes[firstIndex], activeBoxes[secondIndex]))
-            }
-        }
-
-        var activeCount = activeBoxes.size
-        var nextPosition = activeBoxes.size
-        while (activeCount > maxBoxes) {
-            val closest = pollActiveCandidate(candidates)
-            closest.first.active = false
-            closest.second.active = false
-
-            val merged = ActiveBox(
-                position = nextPosition++,
-                box = mergeBoxes(closest.first.box, closest.second.box)
-            )
-            for (activeBox in activeBoxes) {
-                if (activeBox.active) candidates.add(MergeCandidate(activeBox, merged))
-            }
-            activeBoxes.add(merged)
-            activeCount--
-        }
-
-        return activeBoxes.asSequence()
-            .filter { it.active }
-            .map { it.box }
-            .toList()
-    }
-
-    private fun pollActiveCandidate(candidates: PriorityQueue<MergeCandidate>): MergeCandidate {
-        while (true) {
-            val candidate = requireNotNull(candidates.poll()) {
-                "No merge candidate remained while simplifying a shape"
-            }
-            if (candidate.first.active && candidate.second.active) return candidate
-        }
-    }
+    private fun mergeClosestBoxesWithQueue(boxes: List<Box>, maxBoxes: Int): List<Box> =
+        DeterministicBoxMerger.mergeClosest(boxes, maxBoxes)
 
     private fun mergeClosestBoxesWithScan(boxes: MutableList<Box>, maxBoxes: Int) {
         while (boxes.size > maxBoxes) {
@@ -167,22 +125,6 @@ object ShapeSimplifier {
             maxOf(box1.maxY, box2.maxY),
             maxOf(box1.maxZ, box2.maxZ)
         )
-    }
-
-    private class ActiveBox(val position: Int, val box: Box) {
-        var active = true
-    }
-
-    private class MergeCandidate(val first: ActiveBox, val second: ActiveBox) {
-        val distance = calculateBoxDistance(first.box, second.box)
-
-        companion object {
-            val ORDER = compareBy<MergeCandidate>(
-                { it.distance },
-                { it.first.position },
-                { it.second.position }
-            )
-        }
     }
 
     /**

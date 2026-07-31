@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation
 import net.minecraft.util.shape.VoxelShape
+import net.minecraft.util.shape.VoxelShapes
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
@@ -54,6 +55,20 @@ object ShapeCache {
      */
     fun getOrCompute(key: ShapeCacheKey, computeFunction: () -> VoxelShape): VoxelShape {
         return cache.get(key) { _ -> computeFunction() }
+    }
+
+    internal fun getOrComputeUnion(first: VoxelShape, second: VoxelShape): VoxelShape {
+        val lastUnion = lastBinaryUnion.get()
+        lastUnion.resetIfStale(cacheGeneration.get())
+        if (!lastUnion.matches(first, second)) {
+            lastUnion.rememberSources(first, second)
+            return VoxelShapes.union(first, second)
+        }
+
+        val key = lastUnion.key ?: BinaryUnionKey(first, second).also { lastUnion.key = it }
+        val cached = cache.getIfPresent(key)
+        if (cached != null) return cached
+        return cache.get(key) { VoxelShapes.union(first, second) }
     }
 
     internal fun getOrComputeUnion(

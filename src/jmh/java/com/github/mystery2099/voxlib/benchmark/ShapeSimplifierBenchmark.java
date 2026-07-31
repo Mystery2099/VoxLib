@@ -30,6 +30,11 @@ public class ShapeSimplifierBenchmark {
     }
 
     @Benchmark
+    public VoxelShape objectQueueSimplifier() {
+        return LegacyShapeOperations.objectQueueSimplify(shape, maxBoxes);
+    }
+
+    @Benchmark
     public VoxelShape voxLibSimplifier() {
         return ShapeSimplifier.INSTANCE.simplify(shape, maxBoxes);
     }

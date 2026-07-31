@@ -16,7 +16,8 @@ object CommonShapes {
     private val topSlabs = AtomicReferenceArray<VoxelShape>(16)
     private val pillars = AtomicReferenceArray<VoxelShape>(28)
     private val tables = AtomicReferenceArray<VoxelShape>(36)
-    private val chairs = AtomicReferenceArray<VoxelShape>(384)
+    private val chairsWithoutBackrests = AtomicReferenceArray<VoxelShape>(12)
+    private val chairsWithBackrests = AtomicReferenceArray<VoxelShape>(192)
     private val fenceConnections = AtomicReferenceArray<VoxelShape>(16)
     private val stairs = AtomicReferenceArray<VoxelShape>(4)
     private val fencePost = AtomicReference<VoxelShape>()
@@ -105,8 +106,13 @@ object CommonShapes {
         require(seatHeight in 1..12) { "Seat height must be between 1 and 12" }
         require(backrestHeight in 1..16) { "Backrest height must be between 1 and 16" }
 
-        val index = ((seatHeight - 1) * 2 + if (hasBackrest) 1 else 0) * 16 + backrestHeight - 1
-        return chairs.getOrCreate(index) {
+        val cache = if (hasBackrest) chairsWithBackrests else chairsWithoutBackrests
+        val index = if (hasBackrest) {
+            (seatHeight - 1) * 16 + backrestHeight - 1
+        } else {
+            seatHeight - 1
+        }
+        return cache.getOrCreate(index) {
             val seat = createCuboidShape(1, seatHeight, 1, 15, seatHeight + 2, 15)
             val legs = createCuboidShape(2, 0, 2, 14, seatHeight, 14)
 

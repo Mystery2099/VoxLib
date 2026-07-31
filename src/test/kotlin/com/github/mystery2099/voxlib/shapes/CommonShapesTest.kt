@@ -107,14 +107,19 @@ class CommonShapesTest {
             }
         }
         for (seatHeight in 1..12) {
+            val chairWithoutBackrest = CommonShapes.createChair(seatHeight, false, 1)
             for (hasBackrest in listOf(false, true)) {
                 for (backrestHeight in 1..16) {
+                    val chair = CommonShapes.createChair(seatHeight, hasBackrest, backrestHeight)
                     assertMemoizedAndExact(
-                        CommonShapes.createChair(seatHeight, hasBackrest, backrestHeight),
+                        chair,
                         CommonShapes.createChair(seatHeight, hasBackrest, backrestHeight),
                         expectedChair(seatHeight, hasBackrest, backrestHeight),
                         "chair seat=$seatHeight backrest=$hasBackrest height=$backrestHeight"
                     )
+                    if (!hasBackrest) {
+                        assertSame(chairWithoutBackrest, chair)
+                    }
                 }
             }
         }

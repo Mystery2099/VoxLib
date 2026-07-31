@@ -87,14 +87,12 @@ object VoxelAssembly {
         // Handle special cases for better performance
         if (shape1.isEmpty) return shape2
         if (shape2.isEmpty) return shape1
-        if (shape1 == VoxelShapes.fullCube()) return shape1
-        if (shape2 == VoxelShapes.fullCube()) return shape2
+        if (shape1 === VoxelShapes.fullCube()) return shape1
+        if (shape2 === VoxelShapes.fullCube()) return shape2
 
         if (!useCache) return VoxelShapes.union(shape1, shape2)
 
-        return ShapeCache.getOrComputeUnion(shape1, shape2) {
-            VoxelShapes.union(shape1, shape2)
-        }
+        return ShapeCache.getOrComputeUnion(shape1, shape2)
     }
 
     /**
@@ -166,9 +164,7 @@ object VoxelAssembly {
         if (nonEmptyCount == 2) {
             val first = nonEmptyShapes[0]
             val second = nonEmptyShapes[1]
-            return ShapeCache.getOrComputeUnion(first, second) {
-                VoxelShapes.union(first, second)
-            }
+            return ShapeCache.getOrComputeUnion(first, second)
         }
 
         if (nonEmptyCount > MAX_CACHED_UNION_SHAPES) {
