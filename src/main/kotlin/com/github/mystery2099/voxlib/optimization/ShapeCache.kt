@@ -69,7 +69,8 @@ object ShapeCache {
         }
 
         val key = lastUnion.key ?: BinaryUnionKey(first, second).also { lastUnion.key = it }
-        cache.getIfPresent(key)?.let { return it }
+        val cached = cache.getIfPresent(key)
+        if (cached != null) return cached
         return getOrComputeOperation(key, computeFunction)
     }
 
@@ -93,6 +94,9 @@ object ShapeCache {
                 last.remember(shape, transformation, it)
             }
         }
+
+        val cached = cache.getIfPresent(key)
+        if (cached != null) return cached
         return getOrComputeOperation(key, computeFunction)
     }
 
@@ -105,6 +109,8 @@ object ShapeCache {
     fun clearCache() {
         cache.invalidateAll()
         cacheGeneration.incrementAndGet()
+        lastBinaryUnion.remove()
+        lastTransformation.remove()
     }
 
     /**
