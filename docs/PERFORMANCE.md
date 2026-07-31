@@ -41,7 +41,9 @@ The suite covers primitive cuboids, overlapping and disjoint binary unions,
 cold and warm multi-unions, direct left-fold and balanced union strategies,
 all rotations and flips, every common-shape factory family, primitive-factory
 first calls, cache contention, legacy versus specialized cache-key allocation,
-and simplification workloads from 8 through 256 boxes.
+and simplification workloads from 8 through 256 boxes. The 256-box
+simplification benchmarks compare the selected implementation with both the
+legacy all-pairs scan and a stable object-queue implementation.
 
 The standalone creation baseline calls `VoxelShapes.cuboid` with coordinates
 divided by 16. This is the implementation of `Block.createCuboidShape` in
@@ -53,31 +55,51 @@ standalone JMH process.
 `verifyPerformance` checks representative results:
 
 - primitive cuboids are no more than 10% slower than vanilla-equivalent code
-- a fresh 8-box binary union is no more than 10% slower than vanilla
+- fresh 1- and 8-box binary unions are no more than 10% slower than vanilla
 - a fresh 32-shape multi-union is no more than 10% slower than vanilla
+- a fresh complex rotation is no more than 10% slower than the uncached legacy path
 - repeated 8-box binary unions are at least 2x faster than recomputation
 - repeated 32-box right rotations are at least 2x faster than the uncached legacy implementation
 - repeated table and chair factories are at least 2x faster than reconstruction
 - uncached unions and transformations do not allocate more than their baselines
 - specialized warm cache paths allocate at most half as much as legacy list-based keys
-- 32-, 64-, and 256-box simplification does not regress against the legacy algorithm
+- cached transformations allocate at most 8 B/op
+- 32-, 64-, and 256-box simplification does not regress against the legacy scan
+- 256-box simplification is no more than 5% slower than the object queue and
+  uses at most 70% of its allocation, with an absolute ceiling of 2 MB/op
 
 Allocation gates use the GC profiler's normalized bytes-per-operation metric.
 All allocation rates remain available in the JSON report and should be reviewed
 alongside latency because they can be sensitive to JIT escape analysis.
+
+For the fractional-cuboid and legacy-simplifier parity checks, a mean outside
+the limit is reported as inconclusive when the two JMH 99.9% confidence
+intervals overlap. This prevents a noisy run from failing a parity gate without
+statistical separation. The stricter cache, cold-operation, and allocation
+gates remain direct mean comparisons.
 
 ## Design outcomes
 
 - Binary unions use two-touch admission. A new pair runs vanilla directly;
   reuse admits it to the bounded cache, and a same-thread last-hit key avoids
   repeated key allocation while Caffeine still enforces expiry and records hits.
-- Transformations use specialized identity keys without allocating a source list.
+- Transformations check the specialized identity key before entering Caffeine's
+  mapping-function path, making repeated same-thread hits effectively
+  allocation-free.
+- `clearCache()` immediately drops the calling thread's last-hit state and uses
+  generation invalidation to retire state on other threads when they next use it.
 - Multi-unions avoid filtering and `subList` allocations and use balanced,
   index-range combination for larger collections.
-- `CommonShapes` stores each requested finite parameter combination in a
-  thread-safe indexed cache.
-- Simplification uses the lower-overhead scan below 96 boxes, a deterministic
-  priority queue from 96 through 256 boxes, and the lower-memory scan above 256.
+- `CommonShapes` uses lazy, thread-safe indexed caches. Chairs without
+  backrests are canonicalized by seat height because their validated
+  `backrestHeight` does not affect geometry. This reduces the maximum number of
+  finite factory slots from 501 to 321.
+- Simplification uses the lower-overhead scan below 96 boxes, a compact
+  deterministic queue from 96 through 256 boxes, and the lower-memory scan
+  above 256. The selected queue pre-sizes its storage and packs each candidate's
+  two positions into one integer while preserving the previous ordering.
+- An array-based primitive heap reduced allocation further in experiments, but
+  was 17–22% slower than the object queue and was therefore not retained.
 
 ## Representative results
 
@@ -86,21 +108,55 @@ The latest three-fork acceptance run was collected on Linux with an AMD Ryzen
 
 | Workload | Baseline | VoxLib | Observation |
 |---|---:|---:|---|
-| Fresh 8-box binary union | 4,254 ns | 4,340 ns | 1.020x vanilla; inside the cold gate |
-| Fresh 32-shape multi-union | 594,799 ns | 119,117 ns | balanced union is 5.0x faster |
-| Repeated 8-box binary union | 4,160 ns | 57.0 ns | cached call is 73x faster |
-| Repeated 32-box right rotation | 96,842 ns | 54.1 ns | cached call is about 1,790x faster |
-| Repeated default table factory | 58,356 ns | 2.12 ns | indexed memoization hit |
-| Repeated default chair factory | 39,630 ns | 2.14 ns | indexed memoization hit |
-| Simplify 32 boxes to 8 | 67.9 µs | 66.4 µs | selected scan does not regress |
-| Simplify 64 boxes to 8 | 500 µs | 495 µs | selected scan does not regress |
-| Simplify 256 boxes to 8 | 36.3 ms | 23.9 ms | deterministic queue is 1.52x faster |
+| Integral cuboid creation | 47.85 ns | 49.07 ns | 1.025x vanilla-equivalent code |
+| Fresh 1-box binary union | 272.77 ns | 299.42 ns | 1.098x vanilla; inside the cold gate |
+| Fresh 8-box binary union | 4,408.95 ns | 4,312.30 ns | slightly faster than vanilla in this run |
+| Fresh 32-shape multi-union | 589.32 µs | 115.55 µs | balanced union is 5.10x faster |
+| Repeated 8-box binary union | 4,093.61 ns | 56.85 ns | cached call is 72x faster |
+| Repeated 32-box right rotation | 98.18 µs | 54.28 ns | cached call is about 1,809x faster |
+| Repeated default table factory | 56.54 µs | 2.11 ns | indexed memoization hit |
+| Repeated default chair factory | 40.26 µs | 2.15 ns | indexed memoization hit |
+| Simplify 32 boxes to 8 | 67.14 µs | 67.45 µs | confidence intervals overlap |
+| Simplify 64 boxes to 8 | 500.73 µs | 495.23 µs | selected scan is slightly faster |
+| Simplify 256 boxes to 8 | 36.07 ms | 22.22 ms | compact queue is 1.62x faster |
 
-The isolated 32-box uncached rotation core measured 97.6 µs and 243,329 B/op
-for the legacy implementation versus 96.6 µs and 243,081 B/op for the new
-implementation. On cache hits, specialized union keys reduced normalized
-allocation from 64 B/op to effectively zero; transformation keys reduced it
-from 64 B/op to 24 B/op.
+The isolated 256-to-8 compact queue measured 22.22 ms and 1,879,307 B/op,
+compared with 23.55 ms and 2,950,590 B/op for the compact object-queue
+baseline. The previous Kotlin object queue measured about 10.93 MB/op on the
+same workload, so the selected implementation reduces transient allocation by
+about 82.8% while preserving merge order and output geometry.
+
+On cache hits, specialized union keys remain effectively allocation-free.
+Specialized transformation lookup measured 0.0018 B/op, also effectively zero,
+versus 77.33 B/op for the legacy list-based cached path.
+
+The fractional-cuboid result in this full run was inconclusive: VoxLib measured
+37.76 ns against 32.07 ns for the vanilla-equivalent baseline, but their 99.9%
+confidence intervals overlapped. An isolated three-fork rerun measured 31.88 ns
+for VoxLib and 37.99 ns for the baseline. This small creation benchmark is
+especially sensitive to JIT escape analysis, so neither run supports a general
+speed claim.
+
+## Allocation versus retained memory
+
+JMH's `B/op` metric measures bytes allocated while performing one operation.
+It is useful for estimating garbage-collector pressure, but it does not measure
+how much memory remains reachable after the operation.
+
+- Simplifier queue storage is temporary. Its approximately 1.88 MB/op for the
+  256-to-8 workload becomes collectible after simplification returns.
+- The shared operation cache still retains at most 500 entries and expires them
+  ten minutes after access. Entries use strong keys and values, so retained
+  memory depends on the size and structure of the source and result shapes.
+- Same-thread binary and transformation fast paths retain their most recent
+  source references. `clearCache()` removes the calling thread's references
+  immediately; other threads discard stale state on their next operation.
+- `CommonShapes` has at most 321 lazily populated slots. These finite,
+  reusable factory results are retained for the life of the class loader.
+
+These bounds describe library bookkeeping, not total Minecraft memory usage.
+Use a heap profiler with a representative modpack and workload when retained
+heap size matters.
 
 Always rerun `performanceCheck` on the target environment and profile real
 Minecraft call patterns before drawing gameplay-level conclusions.

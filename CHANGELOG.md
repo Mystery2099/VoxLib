@@ -16,9 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replaced list-based operation cache keys with specialized identity keys
 - Kept first-use binary union overhead close to vanilla with two-touch cache admission
+- Made repeated transformation cache hits effectively allocation-free and clear calling-thread fast-path state immediately
 - Removed per-box coordinate arrays from shape transformations
-- Memoized finite `CommonShapes` parameter combinations
-- Used a deterministic priority queue for large simplification workloads where benchmarks showed a gain
+- Memoized finite `CommonShapes` parameter combinations and canonicalized chairs without backrests, reducing the maximum slot count from 501 to 321
+- Reduced 256-box simplifier allocation from about 10.93 MB/op to 1.88 MB/op with a compact deterministic queue
 - Centralized Minecraft 1.19.4 union mechanics for easier future ports
 
 ## [1.6.0] - 2026-07-30

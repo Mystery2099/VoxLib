@@ -198,9 +198,11 @@ admission: the first call stays close to vanilla, the second admits the pair,
 and later same-thread calls can reuse the result. Calls made with newly-created
 shape instances should not be expected to hit the cache.
 
-`CommonShapes` factories memoize their finite parameter combinations. A field
-or companion-object constant is still preferable for fixed block geometry
-because it avoids validation and lookup on every shape query.
+`CommonShapes` factories memoize their finite parameter combinations and share
+geometry-equivalent chairs without backrests. The memoization is lazy and
+bounded to 321 slots across all factory families. A field or companion-object
+constant is still preferable for fixed block geometry because it avoids
+validation and lookup on every shape query.
 
 The simplification utilities below may reduce the cost of later outline
 queries, but they deliberately approximate the original geometry by filling
