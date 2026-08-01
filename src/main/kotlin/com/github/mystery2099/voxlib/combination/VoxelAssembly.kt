@@ -146,13 +146,11 @@ object VoxelAssembly {
         if (nonEmptyCount == 0) return EMPTY_SHAPE_ARRAY
         if (nonEmptyCount == voxelShapes.size) return voxelShapes
 
-        val filtered = arrayOfNulls<VoxelShape>(nonEmptyCount)
-        var destinationIndex = 0
-        for (shape in voxelShapes) {
-            if (!shape.isEmpty) filtered[destinationIndex++] = shape
+        var sourceIndex = 0
+        return Array(nonEmptyCount) {
+            while (voxelShapes[sourceIndex].isEmpty) sourceIndex++
+            voxelShapes[sourceIndex++]
         }
-        @Suppress("UNCHECKED_CAST")
-        return filtered as Array<VoxelShape>
     }
 
     private fun unionMany(nonEmptyShapes: Array<out VoxelShape>): VoxelShape {
