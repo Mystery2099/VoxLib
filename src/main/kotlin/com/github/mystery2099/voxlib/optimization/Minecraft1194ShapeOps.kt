@@ -12,10 +12,10 @@ import net.minecraft.util.shape.VoxelShapes
  */
 internal object Minecraft1194ShapeOps {
     fun union(shapes: Array<out VoxelShape>, size: Int = shapes.size): VoxelShape =
-        unionRange(shapes, 0, size)
+        unionRange(shapes, 0, size) { it }
 
     fun unionNullable(shapes: Array<VoxelShape?>, size: Int): VoxelShape =
-        unionNullableRange(shapes, 0, size)
+        unionRange(shapes, 0, size) { requireNotNull(it) }
 
     fun transformBoxes(
         shape: VoxelShape,
@@ -56,45 +56,32 @@ internal object Minecraft1194ShapeOps {
         return transformed.union()
     }
 
-    private fun unionRange(shapes: Array<out VoxelShape>, fromIndex: Int, toIndex: Int): VoxelShape {
-        val size = toIndex - fromIndex
-        if (size == 0) return VoxelShapes.empty()
-        if (size == 1) return shapes[fromIndex]
-        if (size <= DIRECT_UNION_LIMIT) {
-            var result = shapes[fromIndex]
-            for (index in fromIndex + 1 until toIndex) {
-                result = VoxelShapes.union(result, shapes[index])
-            }
-            return result
-        }
-
-        val middle = fromIndex + size / 2
-        return VoxelShapes.union(
-            unionRange(shapes, fromIndex, middle),
-            unionRange(shapes, middle, toIndex)
-        )
-    }
-
-    private fun unionNullableRange(
-        shapes: Array<VoxelShape?>,
+    /**
+     * Divide-and-conquer union over `[fromIndex, toIndex)`.
+     * [resolve] maps each slot to a non-null shape (identity for dense arrays,
+     * [requireNotNull] for growable nullable buffers).
+     */
+    private fun <T> unionRange(
+        shapes: Array<T>,
         fromIndex: Int,
-        toIndex: Int
+        toIndex: Int,
+        resolve: (T) -> VoxelShape
     ): VoxelShape {
         val size = toIndex - fromIndex
         if (size == 0) return VoxelShapes.empty()
-        if (size == 1) return requireNotNull(shapes[fromIndex])
+        if (size == 1) return resolve(shapes[fromIndex])
         if (size <= DIRECT_UNION_LIMIT) {
-            var result = requireNotNull(shapes[fromIndex])
+            var result = resolve(shapes[fromIndex])
             for (index in fromIndex + 1 until toIndex) {
-                result = VoxelShapes.union(result, requireNotNull(shapes[index]))
+                result = VoxelShapes.union(result, resolve(shapes[index]))
             }
             return result
         }
 
         val middle = fromIndex + size / 2
         return VoxelShapes.union(
-            unionNullableRange(shapes, fromIndex, middle),
-            unionNullableRange(shapes, middle, toIndex)
+            unionRange(shapes, fromIndex, middle, resolve),
+            unionRange(shapes, middle, toIndex, resolve)
         )
     }
 

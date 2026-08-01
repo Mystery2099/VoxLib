@@ -8,18 +8,33 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 /**
- * A utility object providing pre-defined common shapes used in Minecraft modding.
- * These shapes can be used as a starting point for more complex block shapes.
+ * Pre-defined common shapes for Minecraft modding.
+ *
+ * Finite parameter spaces are memoized in fixed [AtomicReferenceArray] slots.
+ * Index helpers below document how each parameter packs into those slots.
  */
 object CommonShapes {
-    private val slabs = AtomicReferenceArray<VoxelShape>(16)
-    private val topSlabs = AtomicReferenceArray<VoxelShape>(16)
-    private val pillars = AtomicReferenceArray<VoxelShape>(28)
-    private val tables = AtomicReferenceArray<VoxelShape>(36)
-    private val chairsWithoutBackrests = AtomicReferenceArray<VoxelShape>(12)
-    private val chairsWithBackrests = AtomicReferenceArray<VoxelShape>(192)
-    private val fenceConnections = AtomicReferenceArray<VoxelShape>(16)
-    private val stairs = AtomicReferenceArray<VoxelShape>(4)
+    // Slot capacities must match the index helpers (ranges × variants).
+    private const val SLAB_SLOTS = 16 // height 1..16
+    private const val PILLAR_WIDTH_SLOTS = 14 // width 1..14
+    private const val PILLAR_SLOTS = PILLAR_WIDTH_SLOTS * 2 // centered + corner
+    private const val TABLE_LEG_VARIANTS = 6 // 1..6
+    private const val TABLE_TOP_VARIANTS = 6 // 1..6
+    private const val TABLE_SLOTS = TABLE_LEG_VARIANTS * TABLE_TOP_VARIANTS
+    private const val CHAIR_SEAT_VARIANTS = 12 // 1..12
+    private const val CHAIR_BACKREST_VARIANTS = 16 // 1..16
+    private const val CHAIR_WITH_BACKREST_SLOTS = CHAIR_SEAT_VARIANTS * CHAIR_BACKREST_VARIANTS
+    private const val FENCE_CONNECTION_SLOTS = 16 // 4 direction bits
+    private const val STAIR_SLOTS = 4 // N/E/S/W
+
+    private val slabs = AtomicReferenceArray<VoxelShape>(SLAB_SLOTS)
+    private val topSlabs = AtomicReferenceArray<VoxelShape>(SLAB_SLOTS)
+    private val pillars = AtomicReferenceArray<VoxelShape>(PILLAR_SLOTS)
+    private val tables = AtomicReferenceArray<VoxelShape>(TABLE_SLOTS)
+    private val chairsWithoutBackrests = AtomicReferenceArray<VoxelShape>(CHAIR_SEAT_VARIANTS)
+    private val chairsWithBackrests = AtomicReferenceArray<VoxelShape>(CHAIR_WITH_BACKREST_SLOTS)
+    private val fenceConnections = AtomicReferenceArray<VoxelShape>(FENCE_CONNECTION_SLOTS)
+    private val stairs = AtomicReferenceArray<VoxelShape>(STAIR_SLOTS)
     private val fencePost = AtomicReference<VoxelShape>()
 
     /**
@@ -30,7 +45,7 @@ object CommonShapes {
      */
     fun createSlab(height: Int): VoxelShape {
         require(height in 1..16) { "Height must be between 1 and 16" }
-        return slabs.getOrCreate(height - 1) {
+        return slabs.getOrCreate(slabIndex(height)) {
             createCuboidShape(0, 0, 0, 16, height, 16)
         }
     }
@@ -43,7 +58,7 @@ object CommonShapes {
      */
     fun createTopSlab(height: Int): VoxelShape {
         require(height in 1..16) { "Height must be between 1 and 16" }
-        return topSlabs.getOrCreate(height - 1) {
+        return topSlabs.getOrCreate(slabIndex(height)) {
             val slabHeight = 16 - height
             createCuboidShape(0, slabHeight, 0, 16, 16, 16)
         }
@@ -59,8 +74,7 @@ object CommonShapes {
     fun createPillar(width: Int, centered: Boolean = true): VoxelShape {
         require(width in 1..14) { "Width must be between 1 and 14" }
 
-        val index = (if (centered) 0 else 14) + width - 1
-        return pillars.getOrCreate(index) {
+        return pillars.getOrCreate(pillarIndex(width, centered)) {
             if (centered) {
                 val offset = (16 - width) / 2
                 createCuboidShape(offset, 0, offset, offset + width, 16, offset + width)
@@ -81,8 +95,7 @@ object CommonShapes {
         require(legWidth in 1..6) { "Leg width must be between 1 and 6" }
         require(topThickness in 1..6) { "Top thickness must be between 1 and 6" }
 
-        val index = (legWidth - 1) * 6 + topThickness - 1
-        return tables.getOrCreate(index) {
+        return tables.getOrCreate(tableIndex(legWidth, topThickness)) {
             val tableTop = createCuboidShape(0, 16 - topThickness, 0, 16, 16, 16)
             val legOffset = 16 - legWidth
             val leg1 = createCuboidShape(0, 0, 0, legWidth, 16 - topThickness, legWidth)
@@ -108,9 +121,9 @@ object CommonShapes {
 
         val cache = if (hasBackrest) chairsWithBackrests else chairsWithoutBackrests
         val index = if (hasBackrest) {
-            (seatHeight - 1) * 16 + backrestHeight - 1
+            chairWithBackrestIndex(seatHeight, backrestHeight)
         } else {
-            seatHeight - 1
+            chairSeatIndex(seatHeight)
         }
         return cache.getOrCreate(index) {
             val seat = createCuboidShape(1, seatHeight, 1, 15, seatHeight + 2, 15)
@@ -152,11 +165,7 @@ object CommonShapes {
         north: Boolean = false, east: Boolean = false,
         south: Boolean = false, west: Boolean = false
     ): VoxelShape {
-        val index = (if (north) 1 else 0) or
-            (if (east) 2 else 0) or
-            (if (south) 4 else 0) or
-            (if (west) 8 else 0)
-        return fenceConnections.getOrCreate(index) {
+        return fenceConnections.getOrCreate(fenceConnectionIndex(north, east, south, west)) {
             var shape = createFencePost()
             if (north) shape += createCuboidShape(7, 6, 0, 9, 15, 6)
             if (east) shape += createCuboidShape(10, 6, 7, 16, 15, 9)
@@ -178,24 +187,51 @@ object CommonShapes {
             "Stairs must face NORTH, EAST, SOUTH, or WEST"
         }
 
-        val index = when (facing) {
-            Direction.NORTH -> 0
-            Direction.EAST -> 1
-            Direction.SOUTH -> 2
-            Direction.WEST -> 3
-            else -> error("Validated horizontal direction became invalid")
-        }
-        return stairs.getOrCreate(index) {
+        return stairs.getOrCreate(stairIndex(facing)) {
             val bottom = createCuboidShape(0, 0, 0, 16, 8, 16)
             val top = when (facing) {
                 Direction.NORTH -> createCuboidShape(0, 8, 0, 16, 16, 8)
                 Direction.EAST -> createCuboidShape(8, 8, 0, 16, 16, 16)
                 Direction.SOUTH -> createCuboidShape(0, 8, 8, 16, 16, 16)
                 Direction.WEST -> createCuboidShape(0, 8, 0, 8, 16, 16)
+                else -> error("Validated horizontal direction became invalid")
             }
 
             bottom + top
         }
+    }
+
+    private fun slabIndex(height: Int): Int = height - 1
+
+    /** Centered widths occupy `[0, 13]`; corner widths occupy `[14, 27]`. */
+    private fun pillarIndex(width: Int, centered: Boolean): Int =
+        (if (centered) 0 else PILLAR_WIDTH_SLOTS) + width - 1
+
+    private fun tableIndex(legWidth: Int, topThickness: Int): Int =
+        (legWidth - 1) * TABLE_TOP_VARIANTS + topThickness - 1
+
+    private fun chairSeatIndex(seatHeight: Int): Int = seatHeight - 1
+
+    private fun chairWithBackrestIndex(seatHeight: Int, backrestHeight: Int): Int =
+        (seatHeight - 1) * CHAIR_BACKREST_VARIANTS + backrestHeight - 1
+
+    private fun fenceConnectionIndex(
+        north: Boolean,
+        east: Boolean,
+        south: Boolean,
+        west: Boolean
+    ): Int =
+        (if (north) 1 else 0) or
+            (if (east) 2 else 0) or
+            (if (south) 4 else 0) or
+            (if (west) 8 else 0)
+
+    private fun stairIndex(facing: Direction): Int = when (facing) {
+        Direction.NORTH -> 0
+        Direction.EAST -> 1
+        Direction.SOUTH -> 2
+        Direction.WEST -> 3
+        else -> error("Validated horizontal direction became invalid")
     }
 
     private inline fun AtomicReferenceArray<VoxelShape>.getOrCreate(

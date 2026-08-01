@@ -75,40 +75,21 @@ object VoxelAssembly {
     operator fun VoxelShape.plus(otherShape: VoxelShape): VoxelShape =
         this.and(otherShape)
 
-    /**
-     * Internal helper function to combine two shapes with caching.
-     *
-     * @param shape1 The first shape to combine.
-     * @param shape2 The second shape to combine.
-     * @param useCache Whether to use the shape cache (default: true).
-     * @return The combined shape.
-     */
-    private fun unionWithCache(shape1: VoxelShape, shape2: VoxelShape, useCache: Boolean = true): VoxelShape {
-        // Handle special cases for better performance
+    private fun unionWithCache(shape1: VoxelShape, shape2: VoxelShape): VoxelShape {
         if (shape1.isEmpty) return shape2
         if (shape2.isEmpty) return shape1
         if (shape1 === VoxelShapes.fullCube()) return shape1
         if (shape2 === VoxelShapes.fullCube()) return shape2
-
-        if (!useCache) return VoxelShapes.union(shape1, shape2)
-
         return ShapeCache.getOrComputeUnion(shape1, shape2)
     }
 
     /**
-     * Combines a single VoxelShape with a list of other VoxelShapes using the [VoxelAssembly.union] operation.
-     *
-     * @param otherShapes A list of VoxelShapes to be unified with the receiver.
-     *
-     * @return A new VoxelShape representing the union of all input shapes.
-     *
-     * @see union
-     */
-    /**
-     * Combines a single VoxelShape with a list of other VoxelShapes using the union operation.
+     * Combines a single VoxelShape with additional VoxelShapes using the union operation.
      *
      * @param otherShapes Additional VoxelShapes to combine with the receiver.
      * @return A new VoxelShape representing the union of all shapes.
+     *
+     * @see union
      */
     fun VoxelShape.unifyWith(vararg otherShapes: VoxelShape): VoxelShape = union(this, *otherShapes)
 
@@ -143,35 +124,44 @@ object VoxelAssembly {
         if (voxelShapes.isEmpty()) return VoxelShapes.empty()
         if (voxelShapes.size == 1) return voxelShapes[0]
 
+        val nonEmptyShapes = filterNonEmptyShapes(voxelShapes) ?: return VoxelShapes.fullCube()
+        return when (nonEmptyShapes.size) {
+            0 -> VoxelShapes.empty()
+            1 -> nonEmptyShapes[0]
+            2 -> ShapeCache.getOrComputeUnion(nonEmptyShapes[0], nonEmptyShapes[1])
+            else -> unionMany(nonEmptyShapes)
+        }
+    }
+
+    /**
+     * Collects non-empty shapes, or returns null if any input is a full cube
+     * (union is then trivially full).
+     */
+    private fun filterNonEmptyShapes(voxelShapes: Array<out VoxelShape>): Array<out VoxelShape>? {
         var nonEmptyCount = 0
         for (shape in voxelShapes) {
-            if (shape === VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+            if (shape === VoxelShapes.fullCube()) return null
             if (!shape.isEmpty) nonEmptyCount++
         }
-        if (nonEmptyCount == 0) return VoxelShapes.empty()
-        if (nonEmptyCount == 1) return voxelShapes.first { !it.isEmpty }
+        if (nonEmptyCount == 0) return EMPTY_SHAPE_ARRAY
+        if (nonEmptyCount == voxelShapes.size) return voxelShapes
 
-        val nonEmptyShapes = if (nonEmptyCount == voxelShapes.size) {
-            voxelShapes
-        } else {
-            Array(nonEmptyCount) { VoxelShapes.empty() }.also { filtered ->
-                var destinationIndex = 0
-                for (shape in voxelShapes) {
-                    if (!shape.isEmpty) filtered[destinationIndex++] = shape
-                }
-            }
+        val filtered = arrayOfNulls<VoxelShape>(nonEmptyCount)
+        var destinationIndex = 0
+        for (shape in voxelShapes) {
+            if (!shape.isEmpty) filtered[destinationIndex++] = shape
         }
-        if (nonEmptyCount == 2) {
-            val first = nonEmptyShapes[0]
-            val second = nonEmptyShapes[1]
-            return ShapeCache.getOrComputeUnion(first, second)
-        }
+        @Suppress("UNCHECKED_CAST")
+        return filtered as Array<VoxelShape>
+    }
 
-        if (nonEmptyCount > MAX_CACHED_UNION_SHAPES) {
-            return Minecraft1194ShapeOps.union(nonEmptyShapes, nonEmptyCount)
+    private fun unionMany(nonEmptyShapes: Array<out VoxelShape>): VoxelShape {
+        val count = nonEmptyShapes.size
+        if (count > MAX_CACHED_UNION_SHAPES) {
+            return Minecraft1194ShapeOps.union(nonEmptyShapes, count)
         }
-        return ShapeCache.getOrComputeUnion(nonEmptyShapes, nonEmptyCount) {
-            Minecraft1194ShapeOps.union(nonEmptyShapes, nonEmptyCount)
+        return ShapeCache.getOrComputeUnion(nonEmptyShapes, count) {
+            Minecraft1194ShapeOps.union(nonEmptyShapes, count)
         }
     }
 
@@ -274,4 +264,5 @@ object VoxelAssembly {
     }
 
     private const val BLOCK_COORDINATE_SCALE = 16.0
+    private val EMPTY_SHAPE_ARRAY = emptyArray<VoxelShape>()
 }

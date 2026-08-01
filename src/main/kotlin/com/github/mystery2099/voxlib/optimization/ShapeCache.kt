@@ -10,21 +10,42 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
 
 /**
- * A utility class for caching VoxelShapes to improve performance.
+ * Caffeine-backed cache for expensive VoxelShape operations.
  *
- * VoxelShape operations can be expensive, especially when performed frequently.
- * This cache helps reduce the overhead by storing and reusing previously created shapes.
- * Uses Caffeine caching library for high-performance caching with automatic eviction.
+ * ## Hot-path keys (identity-based)
+ *
+ * Internal union/transform helpers use private keys keyed by **object identity**
+ * (`===` / `System.identityHashCode`), not shape content hashes:
+ * - [BinaryUnionKey] — two shapes
+ * - [TransformationKey] — shape + [VoxelShapeTransformation]
+ * - [MultipleUnionKey] — ordered array of shapes
+ *
+ * ## Admission policies
+ *
+ * **Binary unions** use a ThreadLocal ring of recently seen pairs
+ * ([RecentBinaryUnions]). The first time a pair is seen, no cache key is
+ * allocated and the union is computed uncached. On a later repeat of the same
+ * pair, a key is created and the result is stored. This avoids key/cache
+ * overhead for one-off combinations.
+ *
+ * **Transformations** use [LastTransformation]: the key is allocated on first
+ * sight of a (shape, transform) pair so the common “rotate the same shape
+ * again” path can hit without waiting for a second distinct call pattern.
+ *
+ * ## Invalidation
+ *
+ * [clearCache] invalidates Caffeine entries and bumps [cacheGeneration].
+ * ThreadLocal helpers discard state when their stored generation is stale,
+ * so a cleared cache cannot be re-served from retained last-hit keys.
+ *
+ * ## Public API
+ *
+ * [ShapeCacheKey] + [getOrCompute] remain for callers that manage their own
+ * keys. Hot paths do **not** use [ShapeCacheKey].
  */
 object ShapeCache {
-    /**
-     * Maximum size of the cache to prevent memory leaks
-     */
     private const val MAX_CACHE_SIZE: Long = 500
 
-    /**
-     * Caffeine cache with automatic eviction policies
-     */
     private val cache: Cache<Any, VoxelShape> = Caffeine.newBuilder()
         .maximumSize(MAX_CACHE_SIZE)
         .expireAfterAccess(10, TimeUnit.MINUTES)
@@ -57,15 +78,19 @@ object ShapeCache {
         return cache.get(key) { _ -> computeFunction() }
     }
 
-    internal fun getOrComputeUnion(first: VoxelShape, second: VoxelShape): VoxelShape {
-        val key = recentBinaryUnions.get()
-            .keyForRepeated(first, second, cacheGeneration.get())
-            ?: return VoxelShapes.union(first, second)
-        val cached = cache.getIfPresent(key)
-        if (cached != null) return cached
-        return cache.get(key) { VoxelShapes.union(first, second) }
-    }
+    /**
+     * Binary union with recent-pair admission. Equivalent to
+     * `getOrComputeUnion(first, second) { VoxelShapes.union(first, second) }`.
+     */
+    internal fun getOrComputeUnion(first: VoxelShape, second: VoxelShape): VoxelShape =
+        getOrComputeUnion(first, second) { VoxelShapes.union(first, second) }
 
+    /**
+     * Binary union with recent-pair admission.
+     *
+     * Returns [computeFunction]'s result without caching until the same
+     * identity pair has been seen again on this thread (see [RecentBinaryUnions]).
+     */
     internal fun getOrComputeUnion(
         first: VoxelShape,
         second: VoxelShape,
@@ -85,6 +110,12 @@ object ShapeCache {
         computeFunction: () -> VoxelShape
     ): VoxelShape = getOrComputeOperation(MultipleUnionKey(shapes, size), computeFunction)
 
+    /**
+     * Transformation with last-hit key reuse.
+     *
+     * Allocates an identity key on first sight of (shape, transformation) so
+     * immediate repeats can hit the cache without a second admission step.
+     */
     internal fun getOrComputeTransformation(
         shape: VoxelShape,
         transformation: VoxelShapeTransformation,
@@ -109,7 +140,7 @@ object ShapeCache {
         cache.get(key) { computeFunction() }
 
     /**
-     * Clears the entire cache.
+     * Clears the entire cache and invalidates ThreadLocal admission state.
      */
     fun clearCache() {
         cache.invalidateAll()
@@ -146,6 +177,12 @@ object ShapeCache {
     }
 }
 
+/**
+ * ThreadLocal ring of recently seen binary-union pairs.
+ *
+ * First sight of a pair records the sources and returns null (no key, no cache).
+ * A later match returns (and lazily allocates) a [BinaryUnionKey].
+ */
 private class RecentBinaryUnions {
     private var generation = Long.MIN_VALUE
     private val firstSources = arrayOfNulls<VoxelShape>(RECENT_BINARY_UNION_CAPACITY)
@@ -189,6 +226,9 @@ private class RecentBinaryUnions {
     }
 }
 
+/**
+ * ThreadLocal last (shape, transformation) pair for key reuse on immediate repeats.
+ */
 private class LastTransformation {
     private var generation = Long.MIN_VALUE
     private var shape: VoxelShape? = null
@@ -222,12 +262,14 @@ private class LastTransformation {
 }
 
 /**
- * A key for the shape cache. This combines the original shape's hashcode with
- * an operation identifier to create a unique key for each transformed shape.
+ * General-purpose public cache key for [ShapeCache.getOrCompute].
  *
- * @param originalShapeHash The hashcode of the original shape.
+ * Hot-path unions and transforms use private identity keys instead; prefer those
+ * internal helpers when adding new cached shape operations inside VoxLib.
+ *
+ * @param originalShapeHash Caller-chosen hash of the source shape (or related state).
  * @param operationId A string identifier for the operation performed.
- * @param parameters Additional parameters that affect the transformation.
+ * @param parameters Additional parameters that affect the result.
  */
 data class ShapeCacheKey(
     val originalShapeHash: Int,
@@ -235,6 +277,7 @@ data class ShapeCacheKey(
     val parameters: List<Any> = emptyList()
 )
 
+/** Identity key for a binary union of two shapes. */
 private class BinaryUnionKey(
     private val first: VoxelShape,
     private val second: VoxelShape
@@ -247,6 +290,7 @@ private class BinaryUnionKey(
         other is BinaryUnionKey && first === other.first && second === other.second
 }
 
+/** Identity key for a shape plus a transformation enum. */
 private class TransformationKey(
     private val shape: VoxelShape,
     private val transformation: VoxelShapeTransformation
@@ -261,6 +305,7 @@ private class TransformationKey(
             transformation == other.transformation
 }
 
+/** Identity key for an ordered multi-shape union. */
 private class MultipleUnionKey(sourceShapes: Array<out VoxelShape>, size: Int) {
     private val shapes = Array(size) { sourceShapes[it] }
     private val hash = shapes.fold(1) { result, shape ->
