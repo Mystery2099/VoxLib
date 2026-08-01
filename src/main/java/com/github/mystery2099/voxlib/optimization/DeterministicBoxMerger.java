@@ -9,6 +9,8 @@ import net.minecraft.util.math.Box;
 final class DeterministicBoxMerger {
     private static final int POSITION_BITS = 16;
     private static final int POSITION_MASK = (1 << POSITION_BITS) - 1;
+    private static final int MAX_ORDERED_POSITION_CAPACITY =
+        1 << (Integer.SIZE - 1 - POSITION_BITS);
     private static final Comparator<MergeCandidate> CANDIDATE_ORDER = Comparator
         .comparingDouble((MergeCandidate candidate) -> candidate.distance)
         .thenComparingInt(candidate -> candidate.positionPair);
@@ -19,7 +21,7 @@ final class DeterministicBoxMerger {
     static List<Box> mergeClosest(List<Box> boxes, int maxBoxes) {
         int boxCount = boxes.size();
         int positionCapacity = boxCount * 2 - maxBoxes;
-        if (positionCapacity > POSITION_MASK + 1) {
+        if (positionCapacity > MAX_ORDERED_POSITION_CAPACITY) {
             throw new IllegalArgumentException("Box positions exceed packed candidate capacity");
         }
         Box[] boxesByPosition = new Box[positionCapacity];

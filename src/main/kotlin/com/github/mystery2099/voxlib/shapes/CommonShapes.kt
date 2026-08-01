@@ -134,9 +134,9 @@ object CommonShapes {
      * @return A VoxelShape representing a fence post.
      */
     fun createFencePost(): VoxelShape {
-        fencePost.get()?.let { return it }
-        val created = createCuboidShape(6, 0, 6, 10, 16, 10)
-        return if (fencePost.compareAndSet(null, created)) created else requireNotNull(fencePost.get())
+        return fencePost.getOrCreate {
+            createCuboidShape(6, 0, 6, 10, 16, 10)
+        }
     }
 
     /**
@@ -205,5 +205,11 @@ object CommonShapes {
         get(index)?.let { return it }
         val created = createShape()
         return if (compareAndSet(index, null, created)) created else requireNotNull(get(index))
+    }
+
+    private inline fun <T : Any> AtomicReference<T>.getOrCreate(createValue: () -> T): T {
+        get()?.let { return it }
+        val created = createValue()
+        return if (compareAndSet(null, created)) created else requireNotNull(get())
     }
 }

@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Replaced list-based operation cache keys with specialized identity keys
-- Kept first-use binary union overhead close to vanilla with two-touch cache admission
+- Kept first-use binary union overhead close to vanilla with two-touch admission and a small recent-pair ring
 - Made repeated transformation cache hits effectively allocation-free and clear calling-thread fast-path state immediately
 - Removed per-box coordinate arrays from shape transformations
 - Memoized finite `CommonShapes` parameter combinations and canonicalized chairs without backrests, reducing the maximum slot count from 501 to 321

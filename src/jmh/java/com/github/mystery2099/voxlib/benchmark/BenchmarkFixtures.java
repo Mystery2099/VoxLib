@@ -8,6 +8,9 @@ final class BenchmarkFixtures {
     }
 
     static VoxelShape complexShape(int boxCount, double phase) {
+        if (boxCount > 64) {
+            throw new IllegalArgumentException("complexShape supports at most 64 boxes");
+        }
         VoxelShape result = VoxelShapes.empty();
         for (int index = 0; index < boxCount; index++) {
             int x = index & 3;

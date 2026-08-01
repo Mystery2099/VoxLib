@@ -152,7 +152,7 @@ tasks.register('verifyPerformance') {
 		def results = new groovy.json.JsonSlurper().parse(reportFile)
 		def findResult = { suffix, parameters ->
 			def result = results.find {
-				it.benchmark.endsWith(suffix) &&
+				it.benchmark.endsWith(".${suffix}") &&
 					parameters.every { key, value -> it.params[key] == value.toString() }
 			}
 			if (result == null) {
@@ -238,6 +238,7 @@ tasks.register('verifyPerformance') {
 		)
 		requireAtMost('table', 'legacyTable', [:], 0.50)
 		requireAtMost('chair', 'legacyChair', [:], 0.50)
+		// 32 inputs exceed MAX_CACHED_UNION_SHAPES, so this is the uncached allocation path.
 		requireMetricAtMost(
 			'voxLibMultiUnion',
 			'vanillaMultiUnion',
@@ -272,7 +273,7 @@ tasks.register('verifyPerformance') {
 			8.0,
 			'gc.alloc.rate.norm'
 		)
-		[32, 64, 256].each { boxCount ->
+		[32, 64].each { boxCount ->
 			requireAtMostUnlessInconclusive(
 				'voxLibSimplifier',
 				'legacySimplifier',

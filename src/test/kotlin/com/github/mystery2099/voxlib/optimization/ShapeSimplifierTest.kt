@@ -89,6 +89,7 @@ class ShapeSimplifierTest {
             }
             .fold(VoxelShapes.empty(), VoxelShapes::union)
 
+        assertTrue(countBoxes(shape) in 96..256, "fixture must exercise the priority-queue path")
         assertExactShape(legacySimplify(shape, 3), ShapeSimplifier.simplify(shape, 3))
     }
 
@@ -119,6 +120,7 @@ class ShapeSimplifierTest {
         return count
     }
 
+    // Independent oracle matching the JMH legacy baseline; do not share simplifier code here.
     private fun legacySimplify(shape: VoxelShape, maxBoxes: Int): VoxelShape {
         val boxes = mutableListOf<Box>()
         shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->

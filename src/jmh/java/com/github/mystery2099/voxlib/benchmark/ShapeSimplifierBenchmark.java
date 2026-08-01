@@ -9,33 +9,51 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
-@State(Scope.Thread)
 public class ShapeSimplifierBenchmark {
-    @Param({"8", "16", "32", "64", "256"})
-    public int boxCount;
+    @State(Scope.Thread)
+    public static class SimplifierState {
+        @Param({"8", "16", "32", "64", "256"})
+        public int boxCount;
 
-    @Param({"1", "8"})
-    public int maxBoxes;
+        @Param({"1", "8"})
+        public int maxBoxes;
 
-    private VoxelShape shape;
+        private VoxelShape shape;
 
-    @Setup(Level.Trial)
-    public void setUp() {
-        shape = BenchmarkFixtures.simplifierShape(boxCount);
+        @Setup(Level.Trial)
+        public void setUp() {
+            shape = BenchmarkFixtures.simplifierShape(boxCount);
+        }
+    }
+
+    @State(Scope.Thread)
+    public static class LegacySimplifierState {
+        @Param({"8", "16", "32", "64"})
+        public int boxCount;
+
+        @Param({"1", "8"})
+        public int maxBoxes;
+
+        private VoxelShape shape;
+
+        @Setup(Level.Trial)
+        public void setUp() {
+            shape = BenchmarkFixtures.simplifierShape(boxCount);
+        }
     }
 
     @Benchmark
-    public VoxelShape legacySimplifier() {
-        return LegacyShapeOperations.simplify(shape, maxBoxes);
+    public VoxelShape legacySimplifier(LegacySimplifierState state) {
+        return LegacyShapeOperations.simplify(state.shape, state.maxBoxes);
     }
 
     @Benchmark
-    public VoxelShape objectQueueSimplifier() {
-        return LegacyShapeOperations.objectQueueSimplify(shape, maxBoxes);
+    public VoxelShape objectQueueSimplifier(SimplifierState state) {
+        return LegacyShapeOperations.objectQueueSimplify(state.shape, state.maxBoxes);
     }
 
     @Benchmark
-    public VoxelShape voxLibSimplifier() {
-        return ShapeSimplifier.INSTANCE.simplify(shape, maxBoxes);
+    public VoxelShape voxLibSimplifier(SimplifierState state) {
+        return ShapeSimplifier.INSTANCE.simplify(state.shape, state.maxBoxes);
     }
 }

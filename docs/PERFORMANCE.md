@@ -41,14 +41,21 @@ The suite covers primitive cuboids, overlapping and disjoint binary unions,
 cold and warm multi-unions, direct left-fold and balanced union strategies,
 all rotations and flips, every common-shape factory family, primitive-factory
 first calls, cache contention, legacy versus specialized cache-key allocation,
-and simplification workloads from 8 through 256 boxes. The 256-box
-simplification benchmarks compare the selected implementation with both the
-legacy all-pairs scan and a stable object-queue implementation.
+and simplification workloads from 8 through 256 boxes. The cubic legacy scan
+is limited to 8 through 64 boxes; the 256-box benchmarks compare the selected
+implementation with a stable object-queue implementation instead.
 
 The standalone creation baseline calls `VoxelShapes.cuboid` with coordinates
 divided by 16. This is the implementation of `Block.createCuboidShape` in
 Minecraft 1.19.4, but avoids initializing unrelated block registries in the
 standalone JMH process.
+
+Cold primitive-factory and rotation benchmarks use `Level.Invocation` setup to
+clear memoized entries or rebuild source shapes. This defeats identity caching,
+but the additional JMH setup and timestamping can be significant beside a very
+small benchmark operation and may dilute cold-path ratios, including the 1.10x
+rotation gate. These results should be interpreted as guarded comparisons, not
+precise standalone operation costs.
 
 ## Acceptance thresholds
 
@@ -64,7 +71,7 @@ standalone JMH process.
 - uncached unions and transformations do not allocate more than their baselines
 - specialized warm cache paths allocate at most half as much as legacy list-based keys
 - cached transformations allocate at most 8 B/op
-- 32-, 64-, and 256-box simplification does not regress against the legacy scan
+- 32- and 64-box simplification does not regress against the legacy scan
 - 256-box simplification is no more than 5% slower than the object queue and
   uses at most 70% of its allocation, with an absolute ceiling of 2 MB/op
 
@@ -81,8 +88,9 @@ gates remain direct mean comparisons.
 ## Design outcomes
 
 - Binary unions use two-touch admission. A new pair runs vanilla directly;
-  reuse admits it to the bounded cache, and a same-thread last-hit key avoids
-  repeated key allocation while Caffeine still enforces expiry and records hits.
+  reuse within a small same-thread recent-pair ring admits it to the bounded
+  cache, including short interleaved sequences, while Caffeine still enforces
+  expiry and records hits.
 - Transformations check the specialized identity key before entering Caffeine's
   mapping-function path, making repeated same-thread hits effectively
   allocation-free.
@@ -118,7 +126,7 @@ The latest three-fork acceptance run was collected on Linux with an AMD Ryzen
 | Repeated default chair factory | 40.26 µs | 2.15 ns | indexed memoization hit |
 | Simplify 32 boxes to 8 | 67.14 µs | 67.45 µs | confidence intervals overlap |
 | Simplify 64 boxes to 8 | 500.73 µs | 495.23 µs | selected scan is slightly faster |
-| Simplify 256 boxes to 8 | 36.07 ms | 22.22 ms | compact queue is 1.62x faster |
+| Simplify 256 boxes to 8 | 23.55 ms | 22.22 ms | 5.6% faster than the object queue |
 
 The isolated 256-to-8 compact queue measured 22.22 ms and 1,879,307 B/op,
 compared with 23.55 ms and 2,950,590 B/op for the compact object-queue
@@ -148,9 +156,10 @@ how much memory remains reachable after the operation.
 - The shared operation cache still retains at most 500 entries and expires them
   ten minutes after access. Entries use strong keys and values, so retained
   memory depends on the size and structure of the source and result shapes.
-- Same-thread binary and transformation fast paths retain their most recent
-  source references. `clearCache()` removes the calling thread's references
-  immediately; other threads discard stale state on their next operation.
+- Same-thread fast paths retain up to four recent binary operand pairs and the
+  most recent transformation source. `clearCache()` removes the calling
+  thread's references immediately; other threads discard stale state on their
+  next operation.
 - `CommonShapes` has at most 321 lazily populated slots. These finite,
   reusable factory results are retained for the life of the class loader.
 

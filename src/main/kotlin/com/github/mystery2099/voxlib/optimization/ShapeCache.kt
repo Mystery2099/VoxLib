@@ -31,7 +31,7 @@ object ShapeCache {
         .recordStats()
         .build()
     private val cacheGeneration = AtomicLong()
-    private val lastBinaryUnion = ThreadLocal.withInitial(::LastBinaryUnion)
+    private val recentBinaryUnions = ThreadLocal.withInitial(::RecentBinaryUnions)
     private val lastTransformation = ThreadLocal.withInitial(::LastTransformation)
 
     /**
@@ -58,14 +58,9 @@ object ShapeCache {
     }
 
     internal fun getOrComputeUnion(first: VoxelShape, second: VoxelShape): VoxelShape {
-        val lastUnion = lastBinaryUnion.get()
-        lastUnion.resetIfStale(cacheGeneration.get())
-        if (!lastUnion.matches(first, second)) {
-            lastUnion.rememberSources(first, second)
-            return VoxelShapes.union(first, second)
-        }
-
-        val key = lastUnion.key ?: BinaryUnionKey(first, second).also { lastUnion.key = it }
+        val key = recentBinaryUnions.get()
+            .keyForRepeated(first, second, cacheGeneration.get())
+            ?: return VoxelShapes.union(first, second)
         val cached = cache.getIfPresent(key)
         if (cached != null) return cached
         return cache.get(key) { VoxelShapes.union(first, second) }
@@ -76,14 +71,9 @@ object ShapeCache {
         second: VoxelShape,
         computeFunction: () -> VoxelShape
     ): VoxelShape {
-        val lastUnion = lastBinaryUnion.get()
-        lastUnion.resetIfStale(cacheGeneration.get())
-        if (!lastUnion.matches(first, second)) {
-            lastUnion.rememberSources(first, second)
-            return computeFunction()
-        }
-
-        val key = lastUnion.key ?: BinaryUnionKey(first, second).also { lastUnion.key = it }
+        val key = recentBinaryUnions.get()
+            .keyForRepeated(first, second, cacheGeneration.get())
+            ?: return computeFunction()
         val cached = cache.getIfPresent(key)
         if (cached != null) return cached
         return getOrComputeOperation(key, computeFunction)
@@ -123,9 +113,9 @@ object ShapeCache {
      */
     fun clearCache() {
         cache.invalidateAll()
-        cacheGeneration.incrementAndGet()
-        lastBinaryUnion.remove()
-        lastTransformation.remove()
+        val currentGeneration = cacheGeneration.incrementAndGet()
+        recentBinaryUnions.get().clear(currentGeneration)
+        lastTransformation.get().clear(currentGeneration)
     }
 
     /**
@@ -156,27 +146,46 @@ object ShapeCache {
     }
 }
 
-private class LastBinaryUnion {
+private class RecentBinaryUnions {
     private var generation = Long.MIN_VALUE
-    private var first: VoxelShape? = null
-    private var second: VoxelShape? = null
-    var key: BinaryUnionKey? = null
+    private val firstSources = arrayOfNulls<VoxelShape>(RECENT_BINARY_UNION_CAPACITY)
+    private val secondSources = arrayOfNulls<VoxelShape>(RECENT_BINARY_UNION_CAPACITY)
+    private val keys = arrayOfNulls<BinaryUnionKey>(RECENT_BINARY_UNION_CAPACITY)
+    private var size = 0
+    private var nextIndex = 0
 
-    fun resetIfStale(currentGeneration: Long) {
-        if (generation == currentGeneration) return
-        generation = currentGeneration
-        first = null
-        second = null
-        key = null
+    fun keyForRepeated(
+        first: VoxelShape,
+        second: VoxelShape,
+        currentGeneration: Long
+    ): BinaryUnionKey? {
+        resetIfStale(currentGeneration)
+        for (index in 0 until size) {
+            if (firstSources[index] === first && secondSources[index] === second) {
+                return keys[index] ?: BinaryUnionKey(first, second).also { keys[index] = it }
+            }
+        }
+
+        firstSources[nextIndex] = first
+        secondSources[nextIndex] = second
+        keys[nextIndex] = null
+        nextIndex = (nextIndex + 1) % RECENT_BINARY_UNION_CAPACITY
+        if (size < RECENT_BINARY_UNION_CAPACITY) size++
+        return null
     }
 
-    fun matches(first: VoxelShape, second: VoxelShape): Boolean =
-        this.first === first && this.second === second
+    fun clear(currentGeneration: Long) {
+        generation = currentGeneration
+        firstSources.fill(null)
+        secondSources.fill(null)
+        keys.fill(null)
+        size = 0
+        nextIndex = 0
+    }
 
-    fun rememberSources(first: VoxelShape, second: VoxelShape) {
-        this.first = first
-        this.second = second
-        key = null
+    private fun resetIfStale(currentGeneration: Long) {
+        if (generation == currentGeneration) return
+        clear(currentGeneration)
     }
 }
 
@@ -188,6 +197,10 @@ private class LastTransformation {
 
     fun resetIfStale(currentGeneration: Long) {
         if (generation == currentGeneration) return
+        clear(currentGeneration)
+    }
+
+    fun clear(currentGeneration: Long) {
         generation = currentGeneration
         shape = null
         transformation = null
@@ -261,3 +274,5 @@ private class MultipleUnionKey(sourceShapes: Array<out VoxelShape>, size: Int) {
         return shapes.indices.all { shapes[it] === other.shapes[it] }
     }
 }
+
+private const val RECENT_BINARY_UNION_CAPACITY = 4

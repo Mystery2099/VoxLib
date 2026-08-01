@@ -176,5 +176,6 @@ object ShapeSimplifier {
         )
     }
 
+    // Above 256 boxes, the scan avoids the queue's quadratic retained candidate storage.
     private val PRIORITY_QUEUE_BOX_RANGE = 96..256
 }

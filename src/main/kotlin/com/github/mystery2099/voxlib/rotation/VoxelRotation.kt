@@ -116,19 +116,15 @@ object VoxelRotation {
      *
      * @param shape The shape to rotate.
      * @param transformation The transformation to apply.
-     * @param useCache Whether to use caching (default: true).
      * @return The rotated shape.
      */
     private fun rotateWithCache(
         shape: VoxelShape,
-        transformation: VoxelShapeTransformation,
-        useCache: Boolean = true
+        transformation: VoxelShapeTransformation
     ): VoxelShape {
         // Handle special cases for better performance
         if (shape.isEmpty) return VoxelShapes.empty()
         if (shape === VoxelShapes.fullCube()) return VoxelShapes.fullCube()
-
-        if (!useCache) return Minecraft1194ShapeOps.transformBoxes(shape, transformation)
 
         return ShapeCache.getOrComputeTransformation(shape, transformation) {
             Minecraft1194ShapeOps.transformBoxes(shape, transformation)

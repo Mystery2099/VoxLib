@@ -128,7 +128,7 @@ class ShapeCacheTest {
     }
 
     @Test
-    fun `binary last-hit path remains visible in cache statistics`() {
+    fun `binary admitted path remains visible in cache statistics`() {
         val first = VoxelShapes.cuboid(0.0, 0.0, 0.0, 0.25, 0.25, 0.25)
         val second = VoxelShapes.cuboid(0.75, 0.75, 0.75, 1.0, 1.0, 1.0)
         val result = VoxelShapes.union(first, second)
@@ -139,6 +139,24 @@ class ShapeCacheTest {
         ShapeCache.getOrComputeUnion(first, second) { error("cache miss") }
 
         assertTrue(internalCache().stats().hitCount() > hitsBefore)
+    }
+
+    @Test
+    fun `interleaved binary pairs are admitted after reuse`() {
+        val first = VoxelShapes.cuboid(0.0, 0.0, 0.0, 0.2, 0.2, 0.2)
+        val second = VoxelShapes.cuboid(0.2, 0.0, 0.0, 0.4, 0.2, 0.2)
+        val third = VoxelShapes.cuboid(0.4, 0.0, 0.0, 0.6, 0.2, 0.2)
+        val fourth = VoxelShapes.cuboid(0.6, 0.0, 0.0, 0.8, 0.2, 0.2)
+        val firstResult = VoxelShapes.union(first, second)
+        val secondResult = VoxelShapes.union(third, fourth)
+
+        ShapeCache.getOrComputeUnion(first, second) { firstResult }
+        ShapeCache.getOrComputeUnion(third, fourth) { secondResult }
+        ShapeCache.getOrComputeUnion(first, second) { firstResult }
+        ShapeCache.getOrComputeUnion(third, fourth) { secondResult }
+
+        assertSame(firstResult, ShapeCache.getOrComputeUnion(first, second) { error("cache miss") })
+        assertSame(secondResult, ShapeCache.getOrComputeUnion(third, fourth) { error("cache miss") })
     }
 
     @Test
