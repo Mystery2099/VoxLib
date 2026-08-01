@@ -1,6 +1,8 @@
 package com.github.mystery2099.voxlib.combination
 
+import com.github.mystery2099.voxlib.assertExactShape
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.combine
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.union
 import com.github.mystery2099.voxlib.optimization.ShapeCache
 import net.minecraft.util.function.BooleanBiFunction
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 class VoxelAssemblyTest {
     @BeforeEach
@@ -66,4 +69,59 @@ class VoxelAssemblyTest {
         assertFalse(result.isEmpty)
         assertEquals(VoxelShapes.fullCube().boundingBox, result.boundingBox)
     }
+
+    @Test
+    fun `binary operator is exactly equivalent to vanilla union`() {
+        val first = VoxelShapes.cuboid(0.03125, 0.125, 0.25, 0.5625, 0.875, 0.75)
+        val second = VoxelShapes.cuboid(0.4375, 0.0, 0.5, 0.96875, 0.625, 1.0)
+
+        assertExactShape(VoxelShapes.union(first, second), first + second)
+    }
+
+    @Test
+    fun `multi union preserves duplicate and disjoint inputs exactly`() {
+        val first = VoxelShapes.cuboid(0.0, 0.0, 0.0, 0.2, 0.2, 0.2)
+        val second = VoxelShapes.cuboid(0.8, 0.8, 0.8, 1.0, 1.0, 1.0)
+        val expected = VoxelShapes.union(first, first, second)
+
+        assertExactShape(expected, union(first, first, second))
+        assertExactShape(expected, union(second, first, first))
+    }
+
+    @Test
+    fun `large multi union is exactly equivalent to vanilla`() {
+        val shapes = Array(32) { index ->
+            val coordinate = index * 0.04
+            VoxelShapes.cuboid(
+                coordinate, 0.0, 0.0,
+                coordinate + 0.02, 0.5, 0.5
+            )
+        }
+
+        assertExactShape(vanillaUnion(shapes), union(*shapes))
+    }
+
+    @Test
+    fun `deterministic random unions match vanilla`() {
+        val random = Random(2099)
+        repeat(25) {
+            val shapes = Array(12) {
+                val minX = random.nextDouble(0.0, 0.8)
+                val minY = random.nextDouble(0.0, 0.8)
+                val minZ = random.nextDouble(0.0, 0.8)
+                VoxelShapes.cuboid(
+                    minX, minY, minZ,
+                    minX + random.nextDouble(0.05, 0.2),
+                    minY + random.nextDouble(0.05, 0.2),
+                    minZ + random.nextDouble(0.05, 0.2)
+                )
+            }
+            assertExactShape(vanillaUnion(shapes), union(*shapes), "Random union iteration $it")
+        }
+    }
+
+    private fun vanillaUnion(shapes: Array<out net.minecraft.util.shape.VoxelShape>) =
+        shapes.drop(1).fold(shapes.first()) { result, shape ->
+            VoxelShapes.union(result, shape)
+        }
 }

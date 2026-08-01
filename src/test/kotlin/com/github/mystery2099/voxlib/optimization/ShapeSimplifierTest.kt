@@ -1,5 +1,7 @@
 package com.github.mystery2099.voxlib.optimization
 
+import com.github.mystery2099.voxlib.assertExactShape
+import net.minecraft.util.math.Box
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -67,9 +69,10 @@ class ShapeSimplifierTest {
 
     @Test
     fun `simplify rejects limit below one`() {
-        assertThrows(IllegalArgumentException::class.java) {
+        val exception = assertThrows(IllegalArgumentException::class.java) {
             ShapeSimplifier.simplify(VoxelShapes.fullCube(), maxBoxes = 0)
         }
+        assertEquals("maxBoxes must be at least 1", exception.message)
     }
 
     @Test
@@ -77,10 +80,91 @@ class ShapeSimplifierTest {
         assertTrue(ShapeSimplifier.simplify(VoxelShapes.empty()).isEmpty)
     }
 
+    @Test
+    fun `priority queue preserves legacy merge order for equal distances`() {
+        val shape = (0 until 100)
+            .map { index ->
+                val minX = index * 0.125
+                VoxelShapes.cuboid(minX, 0.0, 0.0, minX + 0.0625, 0.0625, 0.0625)
+            }
+            .fold(VoxelShapes.empty(), VoxelShapes::union)
+
+        assertTrue(countBoxes(shape) in 96..256, "fixture must exercise the priority-queue path")
+        assertExactShape(legacySimplify(shape, 3), ShapeSimplifier.simplify(shape, 3))
+    }
+
+    @Test
+    fun `hybrid simplifier matches legacy simplifier for deterministic shapes`() {
+        for (boxCount in listOf(16, 32, 64, 128, 256)) {
+            val shape = (0 until boxCount)
+                .map { index ->
+                    val x = (index % 8) * 0.125
+                    val y = (index / 8) * 0.125
+                    VoxelShapes.cuboid(x, y, 0.0, x + 0.05, y + 0.05, 0.05)
+                }
+                .fold(VoxelShapes.empty(), VoxelShapes::union)
+
+            for (limit in listOf(1, 8)) {
+                assertExactShape(
+                    legacySimplify(shape, limit),
+                    ShapeSimplifier.simplify(shape, limit),
+                    "boxCount=$boxCount, limit=$limit"
+                )
+            }
+        }
+    }
+
     private fun countBoxes(shape: VoxelShape): Int {
         var count = 0
         shape.forEachBox { _, _, _, _, _, _ -> count++ }
         return count
+    }
+
+    // Independent oracle matching the JMH legacy baseline; do not share simplifier code here.
+    private fun legacySimplify(shape: VoxelShape, maxBoxes: Int): VoxelShape {
+        val boxes = mutableListOf<Box>()
+        shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
+            boxes.add(Box(minX, minY, minZ, maxX, maxY, maxZ))
+        }
+        while (boxes.size > maxBoxes) {
+            var firstIndex = 0
+            var secondIndex = 1
+            var minimumDistance = Double.MAX_VALUE
+            for (first in 0 until boxes.size - 1) {
+                for (second in first + 1 until boxes.size) {
+                    val distance = boxDistance(boxes[first], boxes[second])
+                    if (distance < minimumDistance) {
+                        minimumDistance = distance
+                        firstIndex = first
+                        secondIndex = second
+                    }
+                }
+            }
+            val first = boxes[firstIndex]
+            val second = boxes[secondIndex]
+            val merged = Box(
+                minOf(first.minX, second.minX),
+                minOf(first.minY, second.minY),
+                minOf(first.minZ, second.minZ),
+                maxOf(first.maxX, second.maxX),
+                maxOf(first.maxY, second.maxY),
+                maxOf(first.maxZ, second.maxZ)
+            )
+            boxes.removeAt(secondIndex)
+            boxes.removeAt(firstIndex)
+            boxes.add(merged)
+        }
+        return boxes.fold(VoxelShapes.empty()) { result, box ->
+            VoxelShapes.union(result, VoxelShapes.cuboid(box))
+        }
+    }
+
+    private fun boxDistance(first: Box, second: Box): Double {
+        if (first.intersects(second)) return 0.0
+        val dx = maxOf(0.0, maxOf(first.minX - second.maxX, second.minX - first.maxX))
+        val dy = maxOf(0.0, maxOf(first.minY - second.maxY, second.minY - first.maxY))
+        val dz = maxOf(0.0, maxOf(first.minZ - second.maxZ, second.minZ - first.maxZ))
+        return dx * dx + dy * dy + dz * dz
     }
 
     private companion object {

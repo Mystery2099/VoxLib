@@ -192,9 +192,17 @@ companion object {
 ```
 
 This avoids both repeated construction and cache lookup overhead. VoxLib's
-bounded cache is most useful when the same transformation or small union is
-repeated with the same `VoxelShape` instances. Calls made with newly-created
+bounded cache is most useful when the same transformation or binary union is
+repeated with the same `VoxelShape` instances. Binary unions use two-touch
+admission: the first call stays close to vanilla, the second admits the pair,
+and later same-thread calls can reuse the result. Calls made with newly-created
 shape instances should not be expected to hit the cache.
+
+`CommonShapes` factories memoize their finite parameter combinations and share
+geometry-equivalent chairs without backrests. The memoization is lazy and
+bounded to 321 slots across all factory families. A field or companion-object
+constant is still preferable for fixed block geometry because it avoids
+validation and lookup on every shape query.
 
 The simplification utilities below may reduce the cost of later outline
 queries, but they deliberately approximate the original geometry by filling
@@ -231,9 +239,10 @@ val rotatedShape = complexShape.rotateRight()
 val combinedShape = union(complexShape, hollowShape)
 ```
 
-The project does not currently include representative performance benchmarks.
-Measure with your actual shapes and call patterns before choosing VoxLib APIs
-for performance-sensitive paths.
+The project includes a manual JMH suite and performance gates. See
+[Performance benchmarks](docs/PERFORMANCE.md) for its methodology, scoped
+results, and commands. Measure with your actual shapes and call patterns before
+choosing VoxLib APIs for performance-sensitive paths.
 
 ### Debug Tools
 

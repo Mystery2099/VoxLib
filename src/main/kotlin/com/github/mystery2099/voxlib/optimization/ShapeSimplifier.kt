@@ -39,57 +39,55 @@ object ShapeSimplifier {
     fun simplify(shape: VoxelShape, maxBoxes: Int = 8): VoxelShape {
         require(maxBoxes >= 1) { "maxBoxes must be at least 1" }
 
-        // Extract all boxes from the shape
         val boxes = mutableListOf<Box>()
         shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
             boxes.add(Box(minX, minY, minZ, maxX, maxY, maxZ))
         }
 
-        // No simplification needed if already under the limit
-        if (boxes.size <= maxBoxes) {
-            return shape
+        if (boxes.size <= maxBoxes) return shape
+
+        // Mid-size inputs use the Java priority-queue merger; tiny/huge inputs use
+        // the O(n²) scan (avoids queue candidate storage when n is very large).
+        val simplifiedBoxes = if (boxes.size in PRIORITY_QUEUE_BOX_RANGE) {
+            mergeClosestBoxesWithQueue(boxes, maxBoxes)
+        } else {
+            mergeClosestBoxesWithScan(boxes, maxBoxes)
         }
 
-        // Merge boxes until we're under the limit
-        while (boxes.size > maxBoxes) {
-            mergeClosestBoxes(boxes)
-        }
-
-        // Rebuild the shape from simplified boxes using fold
-        return boxes.fold(VoxelShapes.empty()) { acc, box ->
+        return simplifiedBoxes.fold(VoxelShapes.empty()) { acc, box ->
             VoxelShapes.union(acc, VoxelShapes.cuboid(box))
         }
     }
 
-    /**
-     * Finds the two closest boxes in the list and merges them.
-     *
-     * @param boxes The list of boxes to process.
-     */
-    private fun mergeClosestBoxes(boxes: MutableList<Box>) {
-        if (boxes.size <= 1) return
+    private fun mergeClosestBoxesWithQueue(boxes: List<Box>, maxBoxes: Int): List<Box> =
+        DeterministicBoxMerger.mergeClosest(boxes, maxBoxes)
 
-        var closestPair: Pair<Int, Int>? = null
-        var minDistance = Double.MAX_VALUE
+    private fun mergeClosestBoxesWithScan(boxes: MutableList<Box>, maxBoxes: Int): List<Box> {
+        while (boxes.size > maxBoxes) {
+            mergeClosestPairWithScan(boxes)
+        }
+        return boxes
+    }
 
-        // Find the closest pair of boxes
+    private fun mergeClosestPairWithScan(boxes: MutableList<Box>) {
+        var closestFirst = 0
+        var closestSecond = 1
+        var minimumDistance = Double.MAX_VALUE
         for (i in 0 until boxes.size - 1) {
             for (j in i + 1 until boxes.size) {
                 val distance = calculateBoxDistance(boxes[i], boxes[j])
-                if (distance < minDistance) {
-                    minDistance = distance
-                    closestPair = Pair(i, j)
+                if (distance < minimumDistance) {
+                    minimumDistance = distance
+                    closestFirst = i
+                    closestSecond = j
                 }
             }
         }
 
-        // Merge the closest pair
-        closestPair?.let { (i, j) ->
-            val mergedBox = mergeBoxes(boxes[i], boxes[j])
-            boxes.removeAt(j) // Remove the second box first (higher index)
-            boxes.removeAt(i) // Then remove the first box
-            boxes.add(mergedBox) // Add the merged box
-        }
+        val mergedBox = mergeBoxes(boxes[closestFirst], boxes[closestSecond])
+        boxes.removeAt(closestSecond)
+        boxes.removeAt(closestFirst)
+        boxes.add(mergedBox)
     }
 
     /**
@@ -101,9 +99,6 @@ object ShapeSimplifier {
      * @return The distance between the boxes.
      */
     private fun calculateBoxDistance(box1: Box, box2: Box): Double {
-        if (box1.intersects(box2)) return 0.0
-
-        // Find minimum distance between box edges on each axis
         val dx = maxOf(0.0, maxOf(box1.minX - box2.maxX, box2.minX - box1.maxX))
         val dy = maxOf(0.0, maxOf(box1.minY - box2.maxY, box2.minY - box1.maxY))
         val dz = maxOf(0.0, maxOf(box1.minZ - box2.maxZ, box2.minZ - box1.maxZ))
@@ -148,8 +143,6 @@ object ShapeSimplifier {
         thickness: Number = 1
     ): VoxelShape {
         val t = thickness.toDouble()
-
-        // Convert all coordinates to double
         val minXd = minX.toDouble()
         val minYd = minY.toDouble()
         val minZd = minZ.toDouble()
@@ -157,24 +150,21 @@ object ShapeSimplifier {
         val maxYd = maxY.toDouble()
         val maxZd = maxZ.toDouble()
 
-        // Create the outer box
         val outerBox = createCuboidShape(minXd, minYd, minZd, maxXd, maxYd, maxZd)
-
-        // Return solid box if too small to hollow out
         if (maxXd - minXd <= 2 * t || maxYd - minYd <= 2 * t || maxZd - minZd <= 2 * t) {
             return outerBox
         }
 
-        // Create the inner box to hollow out
         val innerBox = createCuboidShape(
             minXd + t, minYd + t, minZd + t,
             maxXd - t, maxYd - t, maxZd - t
         )
-
-        // Subtract inner from outer to create hollow shape
         return VoxelShapes.combineAndSimplify(
             outerBox, innerBox,
             net.minecraft.util.function.BooleanBiFunction.ONLY_FIRST
         )
     }
+
+    /** Box counts where the priority-queue merger wins; outside this, use the scan. */
+    private val PRIORITY_QUEUE_BOX_RANGE = 96..256
 }

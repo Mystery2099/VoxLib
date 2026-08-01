@@ -3,7 +3,7 @@
 	"id": "voxlib",
 	"version": "${version}",
 	"name": "Mystery2099's VoxLib",
-	"description": "A library that provides utilities for manipulating, creating, and rotating voxel shapes in Minecraft modding, with performance optimizations and common shape patterns.",
+	"description": "A convenience library for creating, combining, transforming, debugging, and selectively reusing voxel shapes in Minecraft modding.",
 	"authors": ["Mystery2099"],
 	"contact": {
 		"homepage": "https://github.com/Mystery2099/VoxLib",

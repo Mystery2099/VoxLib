@@ -5,6 +5,23 @@ All notable changes to VoxLib will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added a manual JMH benchmark suite with vanilla and legacy baselines
+- Added exact occupied-volume and JVM API compatibility tests
+
+### Changed
+
+- Replaced list-based operation cache keys with specialized identity keys
+- Kept first-use binary union overhead close to vanilla with two-touch admission and a small recent-pair ring
+- Made repeated transformation cache hits effectively allocation-free and clear calling-thread fast-path state immediately
+- Removed per-box coordinate arrays from shape transformations
+- Memoized finite `CommonShapes` parameter combinations and canonicalized chairs without backrests, reducing the maximum slot count from 501 to 321
+- Reduced 256-box simplifier allocation from about 10.93 MB/op to 1.88 MB/op with a compact deterministic queue
+- Centralized Minecraft 1.19.4 union mechanics for easier future ports
+
 ## [1.6.0] - 2026-07-30
 
 ### Added
