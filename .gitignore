@@ -45,3 +45,7 @@ replay_*.log
 
 .serena/
 CLAUDE.md
+
+# agents
+
+AGENTS.md
