@@ -300,6 +300,12 @@ For full documentation of all available utilities, see the KDoc comments in the 
 - Client and dedicated server
 - Mod Menu is optional and only needed for the in-game debug settings screen
 
+## Support (totally optional)
+
+This project is free, and it always will be. Nobody owes me anything for it.
+
+If you somehow still want to tip, you can [buy me a coffee](https://buymeacoffee.com/mystery2099). No pressure at all.
+
 ## License
 
 VoxLib is available under the [Minecraft Mod Public License 1.0.1](LICENSE).
