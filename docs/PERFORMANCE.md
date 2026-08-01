@@ -24,8 +24,11 @@ To run the unit tests, benchmark suite, and acceptance thresholds together:
 ./gradlew performanceCheck
 ```
 
-Neither task is part of `build`, `check`, or normal pull-request CI. Benchmark
-results vary with the JVM, CPU governor, temperature, and competing processes.
+Neither task is part of `build`, `check`, or normal pull-request CI. Loom may
+still compile the JMH source set while preparing the remapped artifact, which
+catches benchmark compilation errors. The benchmark classes and dependencies
+are not packaged or published. Benchmark results vary with the JVM, CPU
+governor, temperature, and competing processes.
 
 ## Method
 
