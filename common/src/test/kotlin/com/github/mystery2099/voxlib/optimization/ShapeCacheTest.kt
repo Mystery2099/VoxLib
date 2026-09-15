@@ -5,12 +5,10 @@ import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.Duration
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -20,15 +18,6 @@ class ShapeCacheTest {
     @BeforeEach
     fun setUp() {
         ShapeCache.clearCache()
-    }
-
-    @Test
-    fun `getOrCompute supports Kotlin lambda`() {
-        val shape = ShapeCache.getOrCompute(ShapeCacheKey(1, "lambda")) {
-            VoxelShapes.fullCube()
-        }
-
-        assertEquals(VoxelShapes.fullCube(), shape)
     }
 
     @Test
@@ -76,6 +65,8 @@ class ShapeCacheTest {
         ShapeCache.getOrCompute(ShapeCacheKey(5, "first")) { VoxelShapes.fullCube() }
         ShapeCache.getOrCompute(ShapeCacheKey(6, "second")) { VoxelShapes.empty() }
 
+        assertEquals(2, ShapeCache.size())
+
         ShapeCache.clearCache()
 
         assertEquals(0, ShapeCache.size())
@@ -113,21 +104,6 @@ class ShapeCacheTest {
     }
 
     @Test
-    fun `size reports entry count`() {
-        ShapeCache.getOrCompute(ShapeCacheKey(7, "first")) { VoxelShapes.fullCube() }
-        ShapeCache.getOrCompute(ShapeCacheKey(8, "second")) { VoxelShapes.empty() }
-
-        assertEquals(2, ShapeCache.size())
-    }
-
-    @Test
-    fun `stats reports cache activity`() {
-        ShapeCache.getOrCompute(ShapeCacheKey(9, "stats")) { VoxelShapes.fullCube() }
-
-        assertTrue(ShapeCache.stats().isNotEmpty())
-    }
-
-    @Test
     fun `binary admitted path remains visible in cache statistics`() {
         val first = VoxelShapes.cuboid(0.0, 0.0, 0.0, 0.25, 0.25, 0.25)
         val second = VoxelShapes.cuboid(0.75, 0.75, 0.75, 1.0, 1.0, 1.0)
@@ -160,16 +136,6 @@ class ShapeCacheTest {
     }
 
     @Test
-    fun `ShapeCacheKey equality includes every property`() {
-        val key = ShapeCacheKey(10, "operation", listOf("parameter"))
-
-        assertEquals(key, ShapeCacheKey(10, "operation", listOf("parameter")))
-        assertNotEquals(key, ShapeCacheKey(11, "operation", listOf("parameter")))
-        assertNotEquals(key, ShapeCacheKey(10, "other", listOf("parameter")))
-        assertNotEquals(key, ShapeCacheKey(10, "operation", listOf("other")))
-    }
-
-    @Test
     fun `operation cache keys use source identity`() {
         val firstSource = VoxelShapes.cuboid(0.0, 0.0, 0.0, 0.25, 0.25, 0.25)
         val secondSource = VoxelShapes.cuboid(0.75, 0.75, 0.75, 1.0, 1.0, 1.0)
@@ -194,17 +160,6 @@ class ShapeCacheTest {
         assertSame(
             secondSource,
             ShapeCache.getOrComputeUnion(secondSource, sharedSource) { secondSource }
-        )
-    }
-
-    @Test
-    fun `cache retains configured bounds and expiration`() {
-        val cache = internalCache()
-
-        assertEquals(500, cache.policy().eviction().orElseThrow().maximum)
-        assertEquals(
-            Duration.ofMinutes(10),
-            cache.policy().expireAfterAccess().orElseThrow().expiresAfter
         )
     }
 

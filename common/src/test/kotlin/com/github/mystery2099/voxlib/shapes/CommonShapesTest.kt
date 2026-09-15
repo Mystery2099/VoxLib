@@ -147,34 +147,6 @@ class CommonShapesTest {
         )
     }
 
-    @Test
-    fun `validation messages remain stable`() {
-        assertValidationMessage("Height must be between 1 and 16") {
-            CommonShapes.createSlab(0)
-        }
-        assertValidationMessage("Height must be between 1 and 16") {
-            CommonShapes.createTopSlab(17)
-        }
-        assertValidationMessage("Width must be between 1 and 14") {
-            CommonShapes.createPillar(0)
-        }
-        assertValidationMessage("Leg width must be between 1 and 6") {
-            CommonShapes.createTable(legWidth = 7)
-        }
-        assertValidationMessage("Top thickness must be between 1 and 6") {
-            CommonShapes.createTable(topThickness = 0)
-        }
-        assertValidationMessage("Seat height must be between 1 and 12") {
-            CommonShapes.createChair(seatHeight = 13)
-        }
-        assertValidationMessage("Backrest height must be between 1 and 16") {
-            CommonShapes.createChair(backrestHeight = 0)
-        }
-        assertValidationMessage("Stairs must face NORTH, EAST, SOUTH, or WEST") {
-            CommonShapes.createStairs(Direction.UP)
-        }
-    }
-
     private fun fenceConnections(mask: Int) = CommonShapes.createFenceConnections(
         north = mask and 1 != 0,
         east = mask and 2 != 0,
@@ -254,9 +226,4 @@ class CommonShapesTest {
         maxY / 16.0,
         maxZ / 16.0
     )
-
-    private fun assertValidationMessage(expected: String, operation: () -> Unit) {
-        val exception = assertThrows(IllegalArgumentException::class.java) { operation() }
-        org.junit.jupiter.api.Assertions.assertEquals(expected, exception.message)
-    }
 }

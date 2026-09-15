@@ -1,203 +1,58 @@
 package com.github.mystery2099.voxlib.debug
 
 import net.minecraft.util.shape.VoxelShapes
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 
-/**
- * Unit tests for the VoxelShapeDebug object.
- *
- * Note: Tests for renderShape() are not included because it requires
- * Minecraft's client rendering system which is not available in a unit test
- * environment. The @Environment(EnvType.CLIENT) annotation ensures this
- * function is only loaded on the client.
- *
- * Tests for logShapeInfo() and compareShapes() are included because they
- * only use server-safe APIs (println and VoxelShape operations).
- */
 class VoxelShapeDebugTest {
-
     @Test
-    fun `logShapeInfo with empty shape logs correctly`() {
-        val shape = VoxelShapes.empty()
-
-        // Capture stdout
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.logShapeInfo(shape, "EmptyShape")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("EmptyShape contains 0 boxes:"))
-        } finally {
-            System.setOut(System.out)
+    fun `logging reports shape names box counts and coordinates`() {
+        val output = captureOutput {
+            VoxelShapeDebug.logShapeInfo(VoxelShapes.empty())
+            VoxelShapeDebug.logShapeInfo(VoxelShapes.fullCube(), "FullCube")
         }
+
+        assertTrue(output.contains("VoxelShape contains 0 boxes:"))
+        assertTrue(output.contains("FullCube contains 1 boxes:"))
+        assertTrue(output.contains("Box: (0.0, 0.0, 0.0) to (1.0, 1.0, 1.0)"))
     }
 
     @Test
-    fun `logShapeInfo with full cube logs correctly`() {
-        val shape = VoxelShapes.fullCube()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.logShapeInfo(shape, "FullCube")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("FullCube contains 1 boxes:"))
-            assertTrue(output.contains("Box: (0.0, 0.0, 0.0) to (1.0, 1.0, 1.0)"))
-        } finally {
-            System.setOut(System.out)
+    fun `comparison reports identical shapes`() {
+        val output = captureOutput {
+            VoxelShapeDebug.compareShapes(VoxelShapes.fullCube(), VoxelShapes.fullCube())
         }
+
+        assertTrue(output.contains("Comparing Shape 1 (1 boxes) with Shape 2 (1 boxes):"))
+        assertTrue(output.contains("The shapes are identical."))
     }
 
     @Test
-    fun `logShapeInfo with default name uses VoxelShape`() {
-        val shape = VoxelShapes.empty()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.logShapeInfo(shape)
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("VoxelShape contains"))
-        } finally {
-            System.setOut(System.out)
+    fun `comparison reports different shapes`() {
+        val output = captureOutput {
+            VoxelShapeDebug.compareShapes(VoxelShapes.fullCube(), VoxelShapes.empty(), "Full", "Empty")
         }
+
+        assertTrue(output.contains("Comparing Full (1 boxes) with Empty (0 boxes):"))
+        assertTrue(output.contains("Full boxes:"))
+        assertTrue(output.contains("Empty boxes:"))
+        assertFalse(output.contains("The shapes are identical."))
     }
 
-    @Test
-    fun `logShapeInfo with custom name uses provided name`() {
-        val shape = VoxelShapes.empty()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.logShapeInfo(shape, "CustomName")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("CustomName contains"))
-        } finally {
-            System.setOut(System.out)
+    private fun captureOutput(action: () -> Unit): String {
+        val original = System.out
+        val output = ByteArrayOutputStream()
+        PrintStream(output).use { stream ->
+            try {
+                System.setOut(stream)
+                action()
+            } finally {
+                System.setOut(original)
+            }
         }
-    }
-
-    @Test
-    fun `compareShapes with identical shapes reports equality`() {
-        val shape1 = VoxelShapes.fullCube()
-        val shape2 = VoxelShapes.fullCube()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.compareShapes(shape1, shape2, "ShapeA", "ShapeB")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("Comparing ShapeA (1 boxes) with ShapeB (1 boxes):"))
-            assertTrue(output.contains("The shapes are identical."))
-        } finally {
-            System.setOut(System.out)
-        }
-    }
-
-    @Test
-    fun `compareShapes with different shapes shows differences`() {
-        val shape1 = VoxelShapes.fullCube()
-        val shape2 = VoxelShapes.empty()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.compareShapes(shape1, shape2, "Full", "Empty")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("Comparing Full (1 boxes) with Empty (0 boxes):"))
-            assertFalse(output.contains("The shapes are identical."))
-        } finally {
-            System.setOut(System.out)
-        }
-    }
-
-    @Test
-    fun `compareShapes with two empty shapes reports equality`() {
-        val shape1 = VoxelShapes.empty()
-        val shape2 = VoxelShapes.empty()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.compareShapes(shape1, shape2, "Empty1", "Empty2")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("The shapes are identical."))
-        } finally {
-            System.setOut(System.out)
-        }
-    }
-
-    @Test
-    fun `compareShapes with default names`() {
-        val shape1 = VoxelShapes.empty()
-        val shape2 = VoxelShapes.empty()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.compareShapes(shape1, shape2)
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("Shape 1"))
-            assertTrue(output.contains("Shape 2"))
-        } finally {
-            System.setOut(System.out)
-        }
-    }
-
-    @Test
-    fun `logShapeInfo with empty shape shows no boxes`() {
-        val shape = VoxelShapes.empty()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.logShapeInfo(shape, "TestShape")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("contains 0 boxes:"))
-        } finally {
-            System.setOut(System.out)
-        }
-    }
-
-    @Test
-    fun `compareShapes handles full cube vs empty correctly`() {
-        val full = VoxelShapes.fullCube()
-        val empty = VoxelShapes.empty()
-
-        val outputStream = ByteArrayOutputStream()
-        System.setOut(PrintStream(outputStream))
-
-        try {
-            VoxelShapeDebug.compareShapes(full, empty, "Full", "Empty")
-            val output = outputStream.toString()
-
-            assertTrue(output.contains("Full (1 boxes)"))
-            assertTrue(output.contains("Empty (0 boxes)"))
-            assertFalse(output.contains("The shapes are identical."))
-        } finally {
-            System.setOut(System.out)
-        }
+        return output.toString()
     }
 }

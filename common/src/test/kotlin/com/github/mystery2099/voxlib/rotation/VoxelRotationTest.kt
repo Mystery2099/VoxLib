@@ -29,13 +29,8 @@ class VoxelRotationTest {
 
     @ParameterizedTest
     @EnumSource(VoxelShapeTransformation::class)
-    fun `every transformation preserves empty shape`(transformation: VoxelShapeTransformation) {
+    fun `every transformation preserves empty and full shapes`(transformation: VoxelShapeTransformation) {
         assertEquals(VoxelShapes.empty(), VoxelShapes.empty().rotate(transformation))
-    }
-
-    @ParameterizedTest
-    @EnumSource(VoxelShapeTransformation::class)
-    fun `every transformation preserves full cube`(transformation: VoxelShapeTransformation) {
         assertEquals(VoxelShapes.fullCube(), VoxelShapes.fullCube().rotate(transformation))
     }
 
