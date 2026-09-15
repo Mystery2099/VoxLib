@@ -1,0 +1,130 @@
+plugins {
+	id 'maven-publish'
+}
+
+evaluationDependsOn(':common')
+
+def commonProject = project(':common')
+
+base {
+	archivesName = rootProject.archives_base_name
+}
+
+repositories {
+	maven {
+		name = 'Terraformers'
+		url = 'https://maven.terraformersmc.com/'
+	}
+}
+
+loom {
+	mods {
+		voxlib {
+			sourceSet sourceSets.main
+			sourceSet commonProject.sourceSets.main
+		}
+	}
+}
+
+dependencies {
+	implementation project(path: ':common', configuration: 'namedElements')
+	modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_version}"
+	modImplementation "net.fabricmc:fabric-language-kotlin:${rootProject.fabric_kotlin_version}"
+
+	include("com.github.ben-manes.caffeine:caffeine:${rootProject.caffeine_version}") {
+		exclude group: 'org.checkerframework', module: 'checker-qual'
+		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+	}
+
+	modCompileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+	modLocalRuntime "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+}
+
+processResources {
+	inputs.property 'version', project.version
+	filesMatching('fabric.mod.json') {
+		expand version: project.version
+	}
+}
+
+// Merge common before Loom remaps the complete mod to intermediary names.
+jar {
+	from commonProject.sourceSets.main.output
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	manifest {
+		attributes(
+			'Implementation-Title': rootProject.archives_base_name,
+			'Implementation-Version': project.version,
+			'Implementation-Vendor': 'Mystery2099'
+		)
+	}
+}
+
+sourcesJar {
+	from commonProject.sourceSets.main.allSource
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// Maven publication configuration
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			// Use the remapped jar as the artifact
+			artifact remapJar
+
+			// Include sources
+			artifact(remapSourcesJar) {
+				builtBy remapSourcesJar
+			}
+
+			// Add proper Maven coordinates
+			groupId = project.maven_group
+			artifactId = project.archives_base_name
+			version = project.version
+
+			// Add POM information required by Maven Central
+			pom {
+				name = "VoxLib"
+				description = "A Minecraft Fabric library mod that provides utilities for manipulating, creating, and rotating voxel shapes"
+				url = "https://github.com/Mystery2099/VoxLib"
+
+				licenses {
+					license {
+						name = "Minecraft Mod Public License 1.0.1"
+						url = "https://github.com/Mystery2099/VoxLib/blob/master/LICENSE"
+					}
+				}
+
+				developers {
+					developer {
+						id = "Mystery2099"
+						name = "Mystery2099"
+						email = "xxmysteryxxftb@gmail.com"
+					}
+				}
+
+				scm {
+					connection = "scm:git:git://github.com/Mystery2099/VoxLib.git"
+					developerConnection = "scm:git:ssh://github.com:Mystery2099/VoxLib.git"
+					url = "https://github.com/Mystery2099/VoxLib/tree/master"
+				}
+			}
+		}
+	}
+
+	repositories {
+		// GitHub Packages repository
+		maven {
+			name = "GitHubPackages"
+			url = uri("https://maven.pkg.github.com/Mystery2099/VoxLib")
+
+			credentials {
+				// Try environment variables first (for GitHub Actions)
+				// Then project properties (for local development)
+				username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") ?: "username"
+				password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") ?: "token"
+			}
+		}
+	}
+}

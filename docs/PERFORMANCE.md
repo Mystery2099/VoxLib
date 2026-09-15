@@ -10,18 +10,18 @@ is generally faster than vanilla.
 Use Java 17 on an otherwise idle machine:
 
 ```shell
-./gradlew jmh
+./gradlew :common:jmh
 ```
 
 JMH writes human-readable output and JSON data to:
 
-- `build/reports/jmh/human.txt`
-- `build/reports/jmh/results.json`
+- `common/build/reports/jmh/human.txt`
+- `common/build/reports/jmh/results.json`
 
 To run the unit tests, benchmark suite, and acceptance thresholds together:
 
 ```shell
-./gradlew performanceCheck
+./gradlew :common:performanceCheck
 ```
 
 Neither task is part of `build`, `check`, or normal pull-request CI. Loom may

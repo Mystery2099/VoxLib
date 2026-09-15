@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class DedicatedServerClassLoadingTest {
     @Test
-    fun `core shape APIs load without client class references`() {
+    fun `core shape APIs load without client or loader class references`() {
         val classLoader = requireNotNull(javaClass.classLoader)
         val coreClasses = listOf(
             "com.github.mystery2099.voxlib.combination.VoxelAssembly",
@@ -23,6 +23,10 @@ class DedicatedServerClassLoadingTest {
             val resourceName = className.replace('.', '/') + ".class"
             val classBytes = requireNotNull(classLoader.getResourceAsStream(resourceName)).use { it.readBytes() }
             val constantPoolText = classBytes.toString(Charsets.ISO_8859_1)
+            assertFalse(
+                constantPoolText.contains("net/fabricmc"),
+                "$className has a Fabric dependency in the common module"
+            )
             assertFalse(
                 constantPoolText.contains("net/minecraft/client"),
                 "$className has a dedicated-server-unsafe client reference"

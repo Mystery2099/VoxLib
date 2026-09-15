@@ -1,6 +1,7 @@
 # gradle
 
 .gradle/
+.kotlin/
 build/
 out/
 classes/
@@ -31,6 +32,7 @@ bin/
 
 # fabric
 
+logs/
 run/
 
 # java

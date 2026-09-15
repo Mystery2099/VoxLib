@@ -1,376 +1,81 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id 'fabric-loom' version '1.10-SNAPSHOT'
-	id 'maven-publish'
-	id "org.jetbrains.kotlin.jvm" version "2.3.0"
-	id 'me.champeau.jmh' version '0.7.3'
+	id 'base'
+	id 'fabric-loom' version '1.10-SNAPSHOT' apply false
+	id 'org.jetbrains.kotlin.jvm' version '2.3.0' apply false
+	id 'me.champeau.jmh' version '0.7.3' apply false
 }
 
-version = project.mod_version
-group = project.maven_group
-
-base {
-	archivesName = project.archives_base_name
+allprojects {
+	version = rootProject.mod_version
+	group = rootProject.maven_group
 }
 
-repositories {
-	maven {
-		name = "Terraformers"
-		url = "https://maven.terraformersmc.com/"
-	}
-}
-
-loom {
-	mods {
-		"voxlib" {
-			sourceSet sourceSets.main
-		}
-	}
-
-	// Configure the include configuration for embedding dependencies
-	configurations {
-		include
-	}
-}
-
-dependencies {
-	// Minecraft and Fabric dependencies
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
-
-	// Caffeine for high-performance caching
-	implementation("com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}") {
-		exclude group: 'org.checkerframework', module: 'checker-qual'
-		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
-	}
-
-	// Include Caffeine in the final JAR
-	include("com.github.ben-manes.caffeine:caffeine:${project.caffeine_version}") {
-		exclude group: 'org.checkerframework', module: 'checker-qual'
-		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
-	}
-
-	// Optional ModMenu integration
-	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
-	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
-
-	// Testing dependencies
-	testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.2"
-	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.2"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.10.2"
-	testImplementation "org.junit.jupiter:junit-jupiter-params:5.10.2"
-}
-
-// Process resources and expand version in fabric.mod.json
-processResources {
-	// Capture the version at configuration time
-	def projectVersion = project.version
-
-	inputs.property "version", projectVersion
-	filesMatching("fabric.mod.json") {
-		expand "version": projectVersion
-	}
-
-	exclude "**/*.xcf"
-	exclude "assets/voxlib/icon_curseforge.png"
-}
-
-// Set Java and Kotlin compilation targets
-tasks.withType(JavaCompile).configureEach {
-	it.options.release.set(17)
-}
-
-tasks.withType(KotlinCompile).configureEach {
-	it.kotlinOptions.jvmTarget = 17
-}
-
-// Configure jar task
-jar {
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-	// Include LICENSE file
-	from("LICENSE") {
-		rename { "${it}_${archives_base_name}"}
-	}
-
-	// Add manifest attributes
-	manifest {
-		attributes(
-			'Implementation-Title': project.archives_base_name,
-			'Implementation-Version': project.version,
-			'Implementation-Vendor': 'Mystery2099',
-			'Fabric-Loom-Version': '1.10.5'
-		)
-	}
-}
-
-// Java configuration
-java {
-	withSourcesJar()
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
-}
-
-// Configure test task
-tasks.test {
-	useJUnitPlatform()
-	testLogging {
-		events "passed", "skipped", "failed"
-	}
-}
-
-jmh {
-	jmhVersion = project.jmh_version
-	benchmarkMode = ['avgt']
-	timeUnit = 'ns'
-	warmupIterations = 3
-	warmup = '500ms'
-	iterations = 5
-	timeOnIteration = '500ms'
-	fork = 3
-	profilers = ['gc']
-	jvmArgsAppend = ['-Dorg.apache.logging.log4j.simplelog.StatusLogger.level=OFF']
-	resultFormat = 'JSON'
-	resultsFile = project.file("${layout.buildDirectory.get()}/reports/jmh/results.json")
-	humanOutputFile = project.file("${layout.buildDirectory.get()}/reports/jmh/human.txt")
-	failOnError = true
-	zip64 = true
-	duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-tasks.register('verifyPerformance') {
-	dependsOn tasks.jmh
-	doLast {
-		def reportFile = layout.buildDirectory.file('reports/jmh/results.json').get().asFile
-		def results = new groovy.json.JsonSlurper().parse(reportFile)
-		def findResult = { suffix, parameters ->
-			def result = results.find {
-				it.benchmark.endsWith(".${suffix}") &&
-					parameters.every { key, value -> it.params[key] == value.toString() }
-			}
-			if (result == null) {
-				throw new GradleException("Missing JMH result for ${suffix} with ${parameters}")
-			}
-			return result
-		}
-		def findScore = { suffix, parameters, metric ->
-			def result = findResult(suffix, parameters)
-			def metricResult = metric == 'primary'
-				? result.primaryMetric
-				: result.secondaryMetrics[metric]
-			if (metricResult == null) {
-				throw new GradleException(
-					"Missing JMH metric ${metric} for ${suffix} with ${parameters}"
-				)
-			}
-			return metricResult.score as double
-		}
-		def requireMetricAtMost = {
-			candidate,
-			baseline,
-			parameters,
-			ratio,
-			metric ->
-			def candidateScore = findScore(candidate, parameters, metric)
-			def baselineScore = findScore(baseline, parameters, metric)
-			if (candidateScore > baselineScore * ratio) {
-				throw new GradleException(
-					"${candidate} ${metric} was ${candidateScore / baselineScore}x " +
-						"${baseline}; limit is ${ratio}x"
-				)
-			}
-		}
-		def requireAtMost = { candidate, baseline, parameters, ratio ->
-			requireMetricAtMost(candidate, baseline, parameters, ratio, 'primary')
-		}
-		def requireAtMostUnlessInconclusive = { candidate, baseline, parameters, ratio ->
-			def candidateResult = findResult(candidate, parameters).primaryMetric
-			def baselineResult = findResult(baseline, parameters).primaryMetric
-			def exceedsLimit = candidateResult.score > baselineResult.score * ratio
-			def significantlyExceedsLimit =
-				candidateResult.scoreConfidence[0] > baselineResult.scoreConfidence[1] * ratio
-			if (exceedsLimit && significantlyExceedsLimit) {
-				throw new GradleException(
-					"${candidate} primary was ${candidateResult.score / baselineResult.score}x " +
-						"${baseline}; limit is ${ratio}x"
-				)
-			}
-			if (exceedsLimit) {
-				logger.lifecycle(
-					"${candidate} exceeded the mean ${ratio}x limit, but the 99.9% " +
-						"confidence intervals overlap; treating the result as inconclusive"
-				)
-			}
-		}
-		def requireMetricNoMoreThan = { candidate, parameters, limit, metric ->
-			def candidateScore = findScore(candidate, parameters, metric)
-			if (candidateScore > limit) {
-				throw new GradleException(
-					"${candidate} ${metric} was ${candidateScore}; limit is ${limit}"
-				)
-			}
-		}
-
-		requireAtMost('voxLibIntegralCuboid', 'vanillaIntegralCuboid', [:], 1.10)
-		requireAtMostUnlessInconclusive(
-			'voxLibFractionalCuboid',
-			'vanillaFractionalCuboid',
-			[:],
-			1.10
-		)
-		requireAtMost('voxLibColdBinaryUnion', 'vanillaColdBinaryUnion', [boxCount: 1], 1.10)
-		requireAtMost('voxLibColdBinaryUnion', 'vanillaColdBinaryUnion', [boxCount: 8], 1.10)
-		requireAtMost('voxLibColdMultiUnion', 'vanillaColdMultiUnion', [shapeCount: 32], 1.10)
-		requireAtMost('voxLibColdRotation', 'legacyColdRotation', [:], 1.10)
-		requireAtMost('voxLibWarmBinaryUnion', 'vanillaBinaryUnion', [boxCount: 8], 0.50)
-		requireAtMost(
-			'voxLibWarmRotation',
-			'legacyUncachedRotation',
-			[boxCount: 32, transformation: 'ROTATE_RIGHT'],
-			0.50
-		)
-		requireAtMost('table', 'legacyTable', [:], 0.50)
-		requireAtMost('chair', 'legacyChair', [:], 0.50)
-		// 32 inputs exceed MAX_CACHED_UNION_SHAPES, so this is the uncached allocation path.
-		requireMetricAtMost(
-			'voxLibMultiUnion',
-			'vanillaMultiUnion',
-			[shapeCount: 32],
-			1.00,
-			'gc.alloc.rate.norm'
-		)
-		requireMetricAtMost(
-			'voxLibUncachedRotationCore',
-			'legacyUncachedRotationCore',
-			[:],
-			1.00,
-			'gc.alloc.rate.norm'
-		)
-		requireMetricAtMost(
-			'specializedCachedUnion',
-			'legacyCachedUnion',
-			[:],
-			0.50,
-			'gc.alloc.rate.norm'
-		)
-		requireMetricAtMost(
-			'specializedCachedRotation',
-			'legacyCachedRotation',
-			[:],
-			0.50,
-			'gc.alloc.rate.norm'
-		)
-		requireMetricNoMoreThan(
-			'specializedCachedRotation',
-			[:],
-			8.0,
-			'gc.alloc.rate.norm'
-		)
-		[32, 64].each { boxCount ->
-			requireAtMostUnlessInconclusive(
-				'voxLibSimplifier',
-				'legacySimplifier',
-				[boxCount: boxCount, maxBoxes: 8],
-				1.00
-			)
-		}
-		[1, 8].each { maxBoxes ->
-			def parameters = [boxCount: 256, maxBoxes: maxBoxes]
-			requireAtMost(
-				'voxLibSimplifier',
-				'objectQueueSimplifier',
-				parameters,
-				1.05
-			)
-			requireMetricAtMost(
-				'voxLibSimplifier',
-				'objectQueueSimplifier',
-				parameters,
-				0.70,
-				'gc.alloc.rate.norm'
-			)
-			requireMetricNoMoreThan(
-				'voxLibSimplifier',
-				parameters,
-				2_000_000.0,
-				'gc.alloc.rate.norm'
-			)
-		}
-	}
-}
-
-tasks.register('performanceCheck') {
-	group = 'verification'
-	description = 'Runs correctness tests, JMH benchmarks, and performance acceptance gates.'
-	dependsOn tasks.test, tasks.verifyPerformance
-}
-
-// Maven publication configuration
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			// Use the remapped jar as the artifact
-			artifact remapJar
-
-			// Include sources
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
-
-			// Add proper Maven coordinates
-			groupId = project.maven_group
-			artifactId = project.archives_base_name
-			version = project.version
-
-			// Add POM information required by Maven Central
-			pom {
-				name = "VoxLib"
-				description = "A Minecraft Fabric library mod that provides utilities for manipulating, creating, and rotating voxel shapes"
-				url = "https://github.com/Mystery2099/VoxLib"
-
-				licenses {
-					license {
-						name = "Minecraft Mod Public License 1.0.1"
-						url = "https://github.com/Mystery2099/VoxLib/blob/master/LICENSE"
-					}
-				}
-
-				developers {
-					developer {
-						id = "Mystery2099"
-						name = "Mystery2099"
-						email = "xxmysteryxxftb@gmail.com"
-					}
-				}
-
-				scm {
-					connection = "scm:git:git://github.com/Mystery2099/VoxLib.git"
-					developerConnection = "scm:git:ssh://github.com:Mystery2099/VoxLib.git"
-					url = "https://github.com/Mystery2099/VoxLib/tree/master"
-				}
-			}
-		}
-	}
+subprojects {
+	apply plugin: 'fabric-loom'
+	apply plugin: 'org.jetbrains.kotlin.jvm'
 
 	repositories {
-		// GitHub Packages repository
-		maven {
-			name = "GitHubPackages"
-			url = uri("https://maven.pkg.github.com/Mystery2099/VoxLib")
+		mavenCentral()
+	}
 
-			credentials {
-				// Try environment variables first (for GitHub Actions)
-				// Then project properties (for local development)
-				username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") ?: "username"
-				password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") ?: "token"
-			}
+	dependencies {
+		minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+		mappings "net.fabricmc:yarn:${rootProject.yarn_mappings}:v2"
+
+		implementation("com.github.ben-manes.caffeine:caffeine:${rootProject.caffeine_version}") {
+			exclude group: 'org.checkerframework', module: 'checker-qual'
+			exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+		}
+
+		testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.2"
+		testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.2"
+		testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.10.2"
+		testImplementation "org.junit.jupiter:junit-jupiter-params:5.10.2"
+	}
+
+	java {
+		withSourcesJar()
+		toolchain.languageVersion = JavaLanguageVersion.of(17)
+		sourceCompatibility = JavaVersion.VERSION_17
+		targetCompatibility = JavaVersion.VERSION_17
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		options.release.set(17)
+	}
+
+	tasks.withType(KotlinCompile).configureEach {
+		kotlinOptions.jvmTarget = '17'
+	}
+
+	tasks.withType(ProcessResources).configureEach {
+		exclude '**/*.xcf'
+		exclude 'assets/voxlib/icon_curseforge.png'
+	}
+
+	tasks.named('jar') {
+		from(rootProject.file('LICENSE')) {
+			rename { "${it}_${rootProject.archives_base_name}" }
 		}
 	}
+
+	tasks.withType(Test).configureEach {
+		useJUnitPlatform()
+		testLogging.events 'passed', 'skipped', 'failed'
+	}
+}
+
+// Explicit root tasks also work when invoked with an absolute task path.
+tasks.named('assemble') {
+	dependsOn ':common:assemble', ':fabric:assemble'
+}
+
+tasks.named('check') {
+	dependsOn ':common:check', ':fabric:check'
+}
+
+tasks.named('clean') {
+	dependsOn ':common:clean', ':fabric:clean'
 }
