@@ -203,7 +203,7 @@ tasks.register('verifyPerformance') {
 
 tasks.register('performanceCheck') {
 	group = 'verification'
-	description = 'Runs correctness tests, JMH benchmarks, and performance acceptance gates.'
-	dependsOn tasks.test, tasks.verifyPerformance
+	description = 'Runs JMH benchmarks and performance acceptance gates.'
+	dependsOn tasks.verifyPerformance
 }
 

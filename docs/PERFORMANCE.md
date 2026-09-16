@@ -18,7 +18,7 @@ JMH writes human-readable output and JSON data to:
 - `common/build/reports/jmh/human.txt`
 - `common/build/reports/jmh/results.json`
 
-To run the unit tests, benchmark suite, and acceptance thresholds together:
+To run the benchmark suite and acceptance thresholds together:
 
 ```shell
 ./gradlew :common:performanceCheck
