@@ -66,6 +66,57 @@ sourcesJar {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+// One packaging smoke check, using JDK APIs instead of a test framework.
+def commonJar = commonProject.tasks.named('jar').flatMap { it.archiveFile }
+def modJar = tasks.named('remapJar').flatMap { it.archiveFile }
+def verifyModJar = tasks.register('verifyModJar') {
+	group = 'verification'
+	description = 'Checks packaged APIs, shared assets, and common client/loader isolation.'
+	inputs.files(commonJar, modJar)
+	doLast {
+		new java.util.zip.ZipFile(modJar.get().asFile).withCloseable { mod ->
+			def requireEntry = { name ->
+				def entry = mod.getEntry(name)
+				if (entry == null) throw new GradleException("Mod JAR is missing ${name}")
+				entry
+			}
+			['combination/VoxelAssembly', 'rotation/VoxelRotation',
+			 'shapes/CommonShapes', 'optimization/ShapeCache', 'optimization/ShapeSimplifier'].each {
+				requireEntry("com/github/mystery2099/voxlib/${it}.class")
+			}
+			def metadata = mod.getInputStream(requireEntry('fabric.mod.json')).withCloseable {
+				new groovy.json.JsonSlurper().parse(it)
+			}
+			requireEntry(metadata.icon)
+			metadata.entrypoints.values().flatten().each {
+				requireEntry(it.value.replace('.', '/') + '.class')
+			}
+			new java.util.zip.ZipFile(commonJar.get().asFile).withCloseable { common ->
+				common.entries().each { entry ->
+					if (entry.name.endsWith('.class')) {
+						requireEntry(entry.name)
+						// Inspect named bytecode before remapping obscures client package names.
+						def bytecode = common.getInputStream(entry).withCloseable {
+							new String(it.readAllBytes(), java.nio.charset.StandardCharsets.ISO_8859_1)
+						}
+						if (bytecode.contains('net/minecraft/client/') || bytecode.contains('net/fabricmc/')) {
+							throw new GradleException("Common class ${entry.name} references client or Fabric code")
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn verifyModJar
+}
+
+tasks.withType(org.gradle.api.publish.maven.tasks.AbstractPublishToMaven).configureEach {
+	dependsOn verifyModJar
+}
+
 // Maven publication configuration
 publishing {
 	publications {

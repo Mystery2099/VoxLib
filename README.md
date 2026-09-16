@@ -94,7 +94,9 @@ The finished mod JAR will be written to `fabric/build/libs`. You can also run `.
 
 Both modules currently use Loom to provide mapped Minecraft classes. This split prepares the core for another loader; Fabric is still the only supported loader.
 
-Run `./gradlew build` to build both modules. The distributable mod and sources JARs are in `fabric/build/libs/`; the mod includes the common classes and assets. The common JAR is a development artifact, not an installable mod.
+Run `./gradlew build` to build both modules. A single packaging smoke check verifies required API classes, common classes, the shared icon, and entrypoints in the Fabric JAR, and rejects client or Fabric references in common bytecode. It also runs before publishing, or directly with `./gradlew :fabric:verifyModJar`.
+
+The distributable mod and sources JARs are in `fabric/build/libs/`; the mod includes the common classes and assets. The common JAR is a development artifact, not an installable mod.
 
 Use `./gradlew :fabric:runClient` or `./gradlew :fabric:runServer` for development. Run benchmarks with `./gradlew :common:jmh`. Publishing remains on the Fabric module and keeps the existing Maven coordinates.
 
