@@ -21,12 +21,7 @@ object ShapeSimplifier {
      * @param shape The complex shape to simplify.
      * @return A simplified VoxelShape based on the original's bounding box.
      */
-    fun simplifyToBoundingBox(shape: VoxelShape): VoxelShape {
-        if (shape.isEmpty) return Shapes.empty()
-
-        val boundingBox = shape.bounds()
-        return Shapes.create(boundingBox)
-    }
+    fun simplifyToBoundingBox(shape: VoxelShape): VoxelShape = shape.singleEncompassing()
 
     /**
      * Creates a simplified version of a complex shape by reducing the number of boxes.
@@ -114,14 +109,7 @@ object ShapeSimplifier {
      * @return A new box that contains both input boxes.
      */
     private fun mergeBoxes(box1: AABB, box2: AABB): AABB {
-        return AABB(
-            minOf(box1.minX, box2.minX),
-            minOf(box1.minY, box2.minY),
-            minOf(box1.minZ, box2.minZ),
-            maxOf(box1.maxX, box2.maxX),
-            maxOf(box1.maxY, box2.maxY),
-            maxOf(box1.maxZ, box2.maxZ)
-        )
+        return box1.minmax(box2)
     }
 
     /**

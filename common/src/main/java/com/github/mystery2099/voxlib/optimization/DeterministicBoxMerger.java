@@ -130,14 +130,7 @@ final class DeterministicBoxMerger {
     }
 
     private static AABB encompass(AABB first, AABB second) {
-        return new AABB(
-            Math.min(first.minX, second.minX),
-            Math.min(first.minY, second.minY),
-            Math.min(first.minZ, second.minZ),
-            Math.max(first.maxX, second.maxX),
-            Math.max(first.maxY, second.maxY),
-            Math.max(first.maxZ, second.maxZ)
-        );
+        return first.minmax(second);
     }
 
     private static final class MergeCandidate {
