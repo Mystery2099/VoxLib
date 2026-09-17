@@ -317,7 +317,7 @@ For full documentation of all available utilities, see the KDoc comments in the 
 ## Compatibility
 
 - Minecraft 1.20.5 and 1.20.6
-- Fabric Loader 0.18.4 or newer, or NeoForge 21.0.x
+- Fabric Loader 0.18.4 or newer, or NeoForge 20.6.x
 - Java 21 or newer
 - Client and dedicated server
 - Mod Menu is optional and only needed for the in-game debug settings screen
