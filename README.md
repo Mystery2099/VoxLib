@@ -1,9 +1,9 @@
 # VoxLib
 
-A Minecraft Fabric and Forge library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
+A Minecraft Fabric and NeoForge library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
-![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20Forge-blue)
+![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.6-green)
+![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20NeoForge-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
 ## Features
@@ -43,7 +43,7 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions) for Minecraft 1.20.1. Modrinth does not require a username or access token.
+Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions) for Minecraft 1.20.6. Modrinth does not require a username or access token.
 
 #### GitHub Packages
 
@@ -75,9 +75,9 @@ The token needs the `read:packages` scope. Avoid committing it to your project.
 
 For more information on GitHub Packages, see [Working with a GitHub Packages Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#using-a-published-package)
 
-For Fabric, install Fabric API and Fabric Language Kotlin versions compatible with Minecraft 1.20.1. For Forge, use the Forge JAR; Kotlin's standard library and Caffeine are bundled, so Kotlin for Forge is not required.
+For Fabric, install Fabric API and Fabric Language Kotlin versions compatible with Minecraft 1.20.6. For NeoForge, use the NeoForge JAR; Kotlin's standard library and Caffeine are bundled, so Kotlin for NeoForge is not required.
 
-The existing `com.github.mystery2099:voxlib:VERSION` Maven coordinate remains the Fabric artifact. Forge uses `com.github.mystery2099:voxlib-forge:VERSION`. With ModDevGradle, declare it as `modImplementation "com.github.mystery2099:voxlib-forge:VERSION"`. ForgeGradle consumers can use `implementation fg.deobf("com.github.mystery2099:voxlib-forge:VERSION")`. Choose a published version for your loader.
+The existing `com.github.mystery2099:voxlib:VERSION` Maven coordinate remains the Fabric artifact. NeoForge uses `com.github.mystery2099:voxlib-neoforge:VERSION`; with ModDevGradle, declare it as `modImplementation "com.github.mystery2099:voxlib-neoforge:VERSION"`. Choose a published version for your loader.
 
 ### Building from Source
 
@@ -87,27 +87,27 @@ If you would rather use a local build:
 ./gradlew build
 ```
 
-The distributable JARs are `fabric/build/libs/voxlib-fabric-VERSION.jar` and `forge/build/libs/voxlib-forge-VERSION.jar`. Sources JARs are provided for both loaders. `./gradlew publishToMavenLocal` publishes both loader artifacts for use with `mavenLocal()`.
+The distributable JARs are `fabric/build/libs/voxlib-fabric-VERSION.jar` and `neoforge/build/libs/voxlib-neoforge-VERSION.jar`. Sources JARs are provided for both loaders. `./gradlew publishToMavenLocal` publishes both loader artifacts for use with `mavenLocal()`.
 
-Install JDK 21 and JDK 17 before building. The Gradle 9 wrapper selects JDK 21 for the build daemon; Minecraft and compiled mod classes still use Java 17.
+Install JDK 21 before building. Minecraft 1.20.6 requires Java 21, and the Gradle 9 wrapper uses the same JDK for the build daemon and the compiled mod.
 
 ## Project layout
 
 - `common/src/main` contains the geometry, rotation, caching, and simplification APIs, shared initialization, and assets. It has no loader or client dependencies.
 - `common/src/client` contains the shared settings screen, JSON configuration, and debug rendering. Each loader compiles these sources into its own mod.
 - `fabric` contains Fabric entrypoints, the world-render callback, and Mod Menu integration. Fabric Loom compiles and remaps the mod.
-- `forge` contains Forge entrypoints, the block-highlight event adapter, and config-screen registration. ModDevGradle's legacy Forge plugin compiles the shared sources and reobfuscates the distributable JAR.
+- `neoforge` contains NeoForge entrypoints, the block-highlight event adapter, and config-screen registration. ModDevGradle compiles the shared sources into the distributable JAR.
 
-All source code uses Mojang mappings for Minecraft 1.20.1. The common module uses Loom only to provide vanilla Minecraft for compilation and benchmarks; its JAR is a development artifact, not an installable mod. There is no Architectury dependency.
+All source code uses Mojang mappings for Minecraft 1.20.6. The common module uses Loom only to provide vanilla Minecraft for compilation and benchmarks; its JAR is a development artifact, not an installable mod. There is no Architectury dependency.
 
-`./gradlew build` builds both loaders and runs focused packaging and common API checks. The checks verify required classes, metadata, assets, bundled Forge libraries, and common class loading without client or loader access. Run them separately with `:fabric:verifyModJar`, `:forge:verifyModJar`, or `:common:verifyCommonJar`. Benchmarks remain available through `:common:jmh`.
+`./gradlew build` builds both loaders and runs focused packaging and common API checks. The checks verify required classes, metadata, assets, bundled NeoForge libraries, and common class loading without client or loader access. Run them separately with `:fabric:verifyModJar`, `:neoforge:verifyModJar`, or `:common:verifyCommonJar`. Benchmarks remain available through `:common:jmh`.
 
-| Development task | Fabric | Forge |
+| Development task | Fabric | NeoForge |
 | --- | --- | --- |
-| Client | `./gradlew :fabric:runClient` | `./gradlew :forge:runClient` |
-| Dedicated server | `./gradlew :fabric:runServer` | `./gradlew :forge:runServer` |
+| Client | `./gradlew :fabric:runClient` | `./gradlew :neoforge:runClient` |
+| Dedicated server | `./gradlew :fabric:runServer` | `./gradlew :neoforge:runServer` |
 
-The root `runClient` and `runServer` commands default to Fabric. Each loader uses its own `run` directory. The JSON settings filename and debug behavior are the same on both loaders. Fabric exposes settings through Mod Menu; enable **Show libraries** to see VoxLib. Forge exposes settings through its Mods screen.
+The root `runClient` and `runServer` commands default to Fabric. Each loader uses its own `run` directory. The JSON settings filename and debug behavior are the same on both loaders. Fabric exposes settings through Mod Menu; enable **Show libraries** to see VoxLib. NeoForge exposes settings through its Mods screen.
 
 ## Usage Examples
 
@@ -316,9 +316,9 @@ For full documentation of all available utilities, see the KDoc comments in the 
 
 ## Compatibility
 
-- Minecraft 1.20.1
-- Fabric Loader 0.18.4 or newer, or Forge 47.4.10 or newer within the 47.x series
-- Java 17 or newer
+- Minecraft 1.20.5 and 1.20.6
+- Fabric Loader 0.18.4 or newer, or NeoForge 21.0.x
+- Java 21 or newer
 - Client and dedicated server
 - Mod Menu is optional and only needed for the in-game debug settings screen
 

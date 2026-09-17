@@ -20,8 +20,9 @@ object VoxLibClient : ClientModInitializer {
         VoxelShapeDebugClient.initialize()
         WorldRenderEvents.BLOCK_OUTLINE.register { context, target ->
             val consumers = context.consumers() ?: return@register true
+            val matrices = context.matrixStack() ?: return@register true
             VoxelShapeDebugClient.renderTargetedShapes(
-                context.matrixStack(), consumers, context.world(),
+                matrices, consumers, context.world(),
                 target.blockPos(), target.blockState(), target.entity(),
                 target.cameraX(), target.cameraY(), target.cameraZ()
             )

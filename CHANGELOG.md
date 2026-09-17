@@ -9,12 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added a NeoForge build with bundled Kotlin and Caffeine
+- Added NeoForge config-screen and targeted shape-highlight integration
 - Added a Forge 1.20.1 build with bundled Kotlin and Caffeine
 - Added Forge config-screen and targeted shape-highlight integration
 
 
 ### Changed
 
+- Ported the mod to Minecraft 1.20.6 (compatible with 1.20.5), raising the mod to Java 21 and Fabric API 0.99.4
+- Replaced the Forge module with a NeoForge module published as `voxlib-neoforge` via ModDevGradle
+- Updated Mod Menu to 10.0.0 and raised the Java requirement to 21
 - Updated the wrapper to Gradle 9.7.1 and the build daemon to Java 21 while retaining Java 17 mod compatibility
 - Replaced ForgeGradle with ModDevGradle's legacy Forge plugin for Gradle 9 support
 

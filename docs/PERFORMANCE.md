@@ -7,7 +7,7 @@ is generally faster than vanilla.
 
 ## Running the suite
 
-Use Java 17 on an otherwise idle machine:
+Use Java 21 on an otherwise idle machine:
 
 ```shell
 ./gradlew :common:jmh
@@ -32,7 +32,7 @@ governor, temperature, and competing processes.
 
 ## Method
 
-The committed configuration uses JMH 1.37 on a Java 17 toolchain with:
+The committed configuration uses JMH 1.37 on a Java 21 toolchain with:
 
 - average-time mode in nanoseconds
 - three 500 ms warmup iterations
@@ -50,7 +50,7 @@ implementation with a stable object-queue implementation instead.
 
 The standalone creation baseline calls `Shapes.box` with coordinates
 divided by 16. This is the implementation of `Block.box` in
-Minecraft 1.20.1, but avoids initializing unrelated block registries in the
+Minecraft 1.20.6, but avoids initializing unrelated block registries in the
 standalone JMH process.
 
 Cold primitive-factory and rotation benchmarks use `Level.Invocation` setup to
