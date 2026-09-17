@@ -270,7 +270,10 @@ choosing VoxLib APIs for performance-sensitive paths.
 
 VoxLib provides debugging utilities to help you visualize and diagnose voxel shapes during development.
 
-**Note:** Some debug tools are client-only. The `@Environment(EnvType.CLIENT)` annotation ensures they only load on the client, preventing server crashes.
+**Note:** The rendering debug tools are client-only. They live in the shared
+client sources, which each loader compiles into its client-side entrypoints
+(`@Environment(EnvType.CLIENT)` on Fabric, a dist check on NeoForge), so they
+never load on a dedicated server.
 
 #### Client-Side Rendering
 

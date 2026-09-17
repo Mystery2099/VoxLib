@@ -66,6 +66,7 @@ fixed shapes should normally be stored as constants.
 
 ```kotlin
 import com.github.mystery2099.voxlib.shapes.CommonShapes
+import net.minecraft.core.Direction
 
 val slab = CommonShapes.createSlab(8)
 val table = CommonShapes.createTable()
