@@ -48,9 +48,9 @@ and simplification workloads from 8 through 256 boxes. The cubic legacy scan
 is limited to 8 through 64 boxes; the 256-box benchmarks compare the selected
 implementation with a stable object-queue implementation instead.
 
-The standalone creation baseline calls `VoxelShapes.cuboid` with coordinates
-divided by 16. This is the implementation of `Block.createCuboidShape` in
-Minecraft 1.19.4, but avoids initializing unrelated block registries in the
+The standalone creation baseline calls `Shapes.box` with coordinates
+divided by 16. This is the implementation of `Block.box` in
+Minecraft 1.20.1, but avoids initializing unrelated block registries in the
 standalone JMH process.
 
 Cold primitive-factory and rotation benchmarks use `Level.Invocation` setup to

@@ -1,9 +1,9 @@
 # VoxLib
 
-A Minecraft Fabric library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
+A Minecraft Fabric and Forge library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.19.4-green)
-![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)
+![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
+![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20Forge-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
 ## Features
@@ -43,7 +43,7 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions), such as `1.4.0+1.19.4`. Modrinth does not require a username or access token.
+Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions) for Minecraft 1.20.1. Modrinth does not require a username or access token.
 
 #### GitHub Packages
 
@@ -75,7 +75,9 @@ The token needs the `read:packages` scope. Avoid committing it to your project.
 
 For more information on GitHub Packages, see [Working with a GitHub Packages Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#using-a-published-package)
 
-VoxLib also requires Fabric API and Fabric Language Kotlin at runtime. Use versions compatible with Minecraft 1.19.4.
+For Fabric, install Fabric API and Fabric Language Kotlin versions compatible with Minecraft 1.20.1. For Forge, use the Forge JAR; Kotlin's standard library and Caffeine are bundled, so Kotlin for Forge is not required.
+
+The existing `com.github.mystery2099:voxlib:VERSION` Maven coordinate remains the Fabric artifact. Forge uses `com.github.mystery2099:voxlib-forge:VERSION`. With ModDevGradle, declare it as `modImplementation "com.github.mystery2099:voxlib-forge:VERSION"`. ForgeGradle consumers can use `implementation fg.deobf("com.github.mystery2099:voxlib-forge:VERSION")`. Choose a published version for your loader.
 
 ### Building from Source
 
@@ -85,20 +87,27 @@ If you would rather use a local build:
 ./gradlew build
 ```
 
-The finished mod JAR will be written to `fabric/build/libs`. You can also run `./gradlew publishToMavenLocal` and use `mavenLocal()` while developing another mod.
+The distributable JARs are `fabric/build/libs/voxlib-fabric-VERSION.jar` and `forge/build/libs/voxlib-forge-VERSION.jar`. Sources JARs are provided for both loaders. `./gradlew publishToMavenLocal` publishes both loader artifacts for use with `mavenLocal()`.
+
+Install JDK 21 and JDK 17 before building. The Gradle 9 wrapper selects JDK 21 for the build daemon; Minecraft and compiled mod classes still use Java 17.
 
 ## Project layout
 
-- `common` contains the geometry, rotation, caching, and simplification APIs, benchmarks, and shared assets. It uses Minecraft 1.19.4 with Yarn mappings and has no Fabric Loader or Fabric API dependency.
-- `fabric` contains the Fabric entrypoints, client debug rendering, configuration UI, Mod Menu integration, and mod metadata. The existing debug and config APIs remain here because they depend on Fabric and each other.
+- `common/src/main` contains the geometry, rotation, caching, and simplification APIs, shared initialization, and assets. It has no loader or client dependencies.
+- `common/src/client` contains the shared settings screen, JSON configuration, and debug rendering. Each loader compiles these sources into its own mod.
+- `fabric` contains Fabric entrypoints, the world-render callback, and Mod Menu integration. Fabric Loom compiles and remaps the mod.
+- `forge` contains Forge entrypoints, the block-highlight event adapter, and config-screen registration. ModDevGradle's legacy Forge plugin compiles the shared sources and reobfuscates the distributable JAR.
 
-Both modules currently use Loom to provide mapped Minecraft classes. This split prepares the core for another loader; Fabric is still the only supported loader.
+All source code uses Mojang mappings for Minecraft 1.20.1. The common module uses Loom only to provide vanilla Minecraft for compilation and benchmarks; its JAR is a development artifact, not an installable mod. There is no Architectury dependency.
 
-Run `./gradlew build` to build both modules. Focused smoke checks verify required API classes, common classes, the shared icon, and entrypoints in the Fabric JAR, and reject client or Fabric references in common bytecode. They also verify established public JVM method signatures and initialize every class in the common JAR with client and Fabric class loading blocked. These checks run before publishing, or directly with `./gradlew :fabric:verifyModJar`. Run just the common API and class-loading check with `./gradlew :common:verifyCommonJar`. They use JDK APIs and require no test framework.
+`./gradlew build` builds both loaders and runs focused packaging and common API checks. The checks verify required classes, metadata, assets, bundled Forge libraries, and common class loading without client or loader access. Run them separately with `:fabric:verifyModJar`, `:forge:verifyModJar`, or `:common:verifyCommonJar`. Benchmarks remain available through `:common:jmh`.
 
-The distributable mod and sources JARs are in `fabric/build/libs/`; the mod includes the common classes and assets. The common JAR is a development artifact, not an installable mod.
+| Development task | Fabric | Forge |
+| --- | --- | --- |
+| Client | `./gradlew :fabric:runClient` | `./gradlew :forge:runClient` |
+| Dedicated server | `./gradlew :fabric:runServer` | `./gradlew :forge:runServer` |
 
-Use `./gradlew :fabric:runClient` or `./gradlew :fabric:runServer` for development. Run benchmarks with `./gradlew :common:jmh`. Publishing remains on the Fabric module and keeps the existing Maven coordinates.
+The root `runClient` and `runServer` commands default to Fabric. Each loader uses its own `run` directory. The JSON settings filename and debug behavior are the same on both loaders. Fabric exposes settings through Mod Menu; enable **Show libraries** to see VoxLib. Forge exposes settings through its Mods screen.
 
 ## Usage Examples
 
@@ -119,7 +128,7 @@ val baseShape = createCuboidShape(0, 0, 0, 16, 1, 16) // A slab at the bottom of
 
 ```kotlin
 import com.github.mystery2099.voxlib.shapes.CommonShapes
-import net.minecraft.util.math.Direction
+import net.minecraft.core.Direction
 
 // Common pre-defined shapes for quick use
 val slab = CommonShapes.createSlab(8)           // Half-height slab
@@ -156,7 +165,7 @@ val tableShape = base + post + top
 ```kotlin
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.appendShapes
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
-import net.minecraft.util.shape.VoxelShape
+import net.minecraft.world.phys.shapes.VoxelShape
 
 fun createChairShape(hasBackrest: Boolean): VoxelShape {
     val seat = createCuboidShape(2, 8, 2, 14, 10, 14)  // Seat
@@ -268,7 +277,7 @@ VoxLib provides debugging utilities to help you visualize and diagnose voxel sha
 ```kotlin
 import com.github.mystery2099.voxlib.debug.VoxelShapeDebug
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
-import net.minecraft.util.math.BlockPos
+import net.minecraft.core.BlockPos
 import java.awt.Color
 
 // Create a shape to debug
@@ -307,8 +316,8 @@ For full documentation of all available utilities, see the KDoc comments in the 
 
 ## Compatibility
 
-- Minecraft 1.19.4
-- Fabric Loader 0.18.4 or newer
+- Minecraft 1.20.1
+- Fabric Loader 0.18.4 or newer, or Forge 47.4.10 or newer within the 47.x series
 - Java 17 or newer
 - Client and dedicated server
 - Mod Menu is optional and only needed for the in-game debug settings screen

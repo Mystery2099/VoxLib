@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
-import net.minecraft.util.math.Box;
+import net.minecraft.world.phys.AABB;
 
 final class DeterministicBoxMerger {
     private static final int POSITION_BITS = 16;
@@ -18,13 +18,13 @@ final class DeterministicBoxMerger {
     private DeterministicBoxMerger() {
     }
 
-    static List<Box> mergeClosest(List<Box> boxes, int maxBoxes) {
+    static List<AABB> mergeClosest(List<AABB> boxes, int maxBoxes) {
         int boxCount = boxes.size();
         int positionCapacity = boxCount * 2 - maxBoxes;
         if (positionCapacity > MAX_ORDERED_POSITION_CAPACITY) {
-            throw new IllegalArgumentException("Box positions exceed packed candidate capacity");
+            throw new IllegalArgumentException("AABB positions exceed packed candidate capacity");
         }
-        Box[] boxesByPosition = new Box[positionCapacity];
+        AABB[] boxesByPosition = new AABB[positionCapacity];
         boolean[] activePositions = new boolean[positionCapacity];
         for (int position = 0; position < boxCount; position++) {
             boxesByPosition[position] = boxes.get(position);
@@ -68,7 +68,7 @@ final class DeterministicBoxMerger {
             activeCount--;
         }
 
-        List<Box> activeBoxes = new ArrayList<>(activeCount);
+        List<AABB> activeBoxes = new ArrayList<>(activeCount);
         for (int position = 0; position < nextPosition; position++) {
             if (activePositions[position]) {
                 activeBoxes.add(boxesByPosition[position]);
@@ -93,7 +93,7 @@ final class DeterministicBoxMerger {
     }
 
     private static MergeCandidate candidate(
-        Box[] boxesByPosition,
+        AABB[] boxesByPosition,
         int firstPosition,
         int secondPosition
     ) {
@@ -113,7 +113,7 @@ final class DeterministicBoxMerger {
         return initialCandidates + addedCandidates;
     }
 
-    private static double distance(Box first, Box second) {
+    private static double distance(AABB first, AABB second) {
         double dx = Math.max(
             0.0,
             Math.max(first.minX - second.maxX, second.minX - first.maxX)
@@ -129,8 +129,8 @@ final class DeterministicBoxMerger {
         return dx * dx + dy * dy + dz * dz;
     }
 
-    private static Box encompass(Box first, Box second) {
-        return new Box(
+    private static AABB encompass(AABB first, AABB second) {
+        return new AABB(
             Math.min(first.minX, second.minX),
             Math.min(first.minY, second.minY),
             Math.min(first.minZ, second.minZ),

@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MMPL-1.0.1"
+issueTrackerURL="https://github.com/Mystery2099/VoxLib/issues"
+
+[[mods]]
+modId="voxlib"
+version="${version}"
+displayName="Mystery2099's VoxLib"
+displayURL="https://github.com/Mystery2099/VoxLib"
+logoFile="assets/voxlib/icon.png"
+authors="Mystery2099"
+description="A library for creating, combining, transforming, debugging, and reusing voxel shapes."
+
+[[dependencies.voxlib]]
+modId="forge"
+mandatory=true
+versionRange="[47.4.10,48)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.voxlib]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.20.2)"
+ordering="NONE"
+side="BOTH"

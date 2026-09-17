@@ -2,8 +2,8 @@ package com.github.mystery2099.voxlib.shapes
 
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
-import net.minecraft.util.math.Direction
-import net.minecraft.util.shape.VoxelShape
+import net.minecraft.core.Direction
+import net.minecraft.world.phys.shapes.VoxelShape
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
 

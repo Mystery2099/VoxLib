@@ -1,8 +1,8 @@
 package com.github.mystery2099.voxlib.benchmark;
 
-import com.github.mystery2099.voxlib.optimization.Minecraft1194ShapeOps;
+import com.github.mystery2099.voxlib.optimization.Minecraft1201ShapeOps;
 import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation;
-import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
@@ -25,7 +25,7 @@ public class VoxelRotationUncachedBenchmark {
 
     @Benchmark
     public VoxelShape voxLibUncachedRotationCore() {
-        return Minecraft1194ShapeOps.INSTANCE.transformBoxes(
+        return Minecraft1201ShapeOps.INSTANCE.transformBoxes(
             shape,
             VoxelShapeTransformation.ROTATE_RIGHT
         );

@@ -1,15 +1,13 @@
 package com.github.mystery2099.voxlib.debug
 
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
-import net.minecraft.client.render.RenderLayer
-import net.minecraft.client.render.VertexConsumer
-import net.minecraft.client.render.VertexConsumerProvider
-import net.minecraft.client.render.WorldRenderer
-import net.minecraft.client.util.math.MatrixStack
-import net.minecraft.util.math.BlockPos
-import net.minecraft.util.math.Box
-import net.minecraft.util.shape.VoxelShape
+import net.minecraft.client.renderer.RenderType
+import com.mojang.blaze3d.vertex.VertexConsumer
+import net.minecraft.client.renderer.MultiBufferSource
+import net.minecraft.client.renderer.LevelRenderer
+import com.mojang.blaze3d.vertex.PoseStack
+import net.minecraft.core.BlockPos
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.shapes.VoxelShape
 import java.awt.Color
 
 /**
@@ -24,32 +22,31 @@ object VoxelShapeDebug {
      * Renders a VoxelShape at the specified position with the given color.
      * This should be called from a render method.
      *
-     * @param matrices The MatrixStack to use for rendering.
-     * @param vertexConsumers The VertexConsumerProvider to use for rendering.
+     * @param matrices The PoseStack to use for rendering.
+     * @param vertexConsumers The MultiBufferSource to use for rendering.
      * @param shape The VoxelShape to render.
      * @param pos The position at which to render the shape.
      * @param color The color to use for rendering (default is red).
      * @param alpha The alpha value for transparency (0.0-1.0, default is 0.4).
      * @param lineWidth The width of the lines (default is 2.0).
      */
-    @Environment(EnvType.CLIENT)
     fun renderShape(
-        matrices: MatrixStack,
-        vertexConsumers: VertexConsumerProvider,
+        matrices: PoseStack,
+        vertexConsumers: MultiBufferSource,
         shape: VoxelShape,
         pos: BlockPos,
         color: Color = Color.RED,
         alpha: Float = 0.4f,
         lineWidth: Float = 2.0f
     ) {
-        val vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getLines())
+        val vertexConsumer = vertexConsumers.getBuffer(RenderType.lines())
         val offsetX = pos.x.toDouble()
         val offsetY = pos.y.toDouble()
         val offsetZ = pos.z.toDouble()
 
         // Draw each box in the shape
-        shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            val box = Box(
+        shape.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
+            val box = AABB(
                 minX + offsetX, minY + offsetY, minZ + offsetZ,
                 maxX + offsetX, maxY + offsetY, maxZ + offsetZ
             )
@@ -60,18 +57,17 @@ object VoxelShapeDebug {
     /**
      * Draws a box with the specified color and alpha.
      *
-     * @param matrices The MatrixStack to use for rendering.
+     * @param matrices The PoseStack to use for rendering.
      * @param vertexConsumer The VertexConsumer to use for rendering.
-     * @param box The Box to render.
+     * @param box The AABB to render.
      * @param color The color to use for rendering.
      * @param alpha The alpha value for transparency.
      * @param lineWidth The width of the lines (unused, kept for API compatibility).
      */
-    @Environment(EnvType.CLIENT)
     private fun drawBox(
-        matrices: MatrixStack,
+        matrices: PoseStack,
         vertexConsumer: VertexConsumer,
-        box: Box,
+        box: AABB,
         color: Color,
         alpha: Float,
         lineWidth: Float
@@ -80,7 +76,7 @@ object VoxelShapeDebug {
         val green = color.green / 255.0f
         val blue = color.blue / 255.0f
 
-        WorldRenderer.drawBox(
+        LevelRenderer.renderLineBox(
             matrices,
             vertexConsumer,
             box.minX, box.minY, box.minZ,
@@ -99,11 +95,11 @@ object VoxelShapeDebug {
     fun logShapeInfo(shape: VoxelShape, name: String = "VoxelShape") {
         // Count boxes by iterating through them
         var boxCount = 0
-        shape.forEachBox { _, _, _, _, _, _ -> boxCount++ }
+        shape.forAllBoxes { _, _, _, _, _, _ -> boxCount++ }
         println("$name contains $boxCount boxes:")
 
-        shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            println("  Box: ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
+        shape.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
+            println("  AABB: ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
         }
     }
 
@@ -125,8 +121,8 @@ object VoxelShapeDebug {
         // Count boxes by iterating through them
         var boxCount1 = 0
         var boxCount2 = 0
-        shape1.forEachBox { _, _, _, _, _, _ -> boxCount1++ }
-        shape2.forEachBox { _, _, _, _, _, _ -> boxCount2++ }
+        shape1.forAllBoxes { _, _, _, _, _, _ -> boxCount1++ }
+        shape2.forAllBoxes { _, _, _, _, _, _ -> boxCount2++ }
 
         println("Comparing $name1 ($boxCount1 boxes) with $name2 ($boxCount2 boxes):")
 
@@ -136,28 +132,27 @@ object VoxelShapeDebug {
         }
 
         println("  $name1 boxes:")
-        shape1.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            println("    Box: ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
+        shape1.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
+            println("    AABB: ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
         }
 
         println("  $name2 boxes:")
-        shape2.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            println("    Box: ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
+        shape2.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
+            println("    AABB: ($minX, $minY, $minZ) to ($maxX, $maxY, $maxZ)")
         }
     }
 
     /**
      * Renders a VoxelShape using current debug settings from client config.
      *
-     * @param matrices The MatrixStack to use for rendering.
-     * @param vertexConsumers The VertexConsumerProvider to use for rendering.
+     * @param matrices The PoseStack to use for rendering.
+     * @param vertexConsumers The MultiBufferSource to use for rendering.
      * @param shape The VoxelShape to render.
      * @param pos The position at which to render the shape.
      */
-    @Environment(EnvType.CLIENT)
     fun renderShapeWithConfig(
-        matrices: MatrixStack,
-        vertexConsumers: VertexConsumerProvider,
+        matrices: PoseStack,
+        vertexConsumers: MultiBufferSource,
         shape: VoxelShape,
         pos: BlockPos
     ) {

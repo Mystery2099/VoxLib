@@ -2,7 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	id 'base'
-	id 'fabric-loom' version '1.10-SNAPSHOT' apply false
+	id 'fabric-loom' version '1.13.6' apply false
+	id 'net.neoforged.moddev.legacyforge' version '2.0.147' apply false
 	id 'org.jetbrains.kotlin.jvm' version '2.3.0' apply false
 	id 'me.champeau.jmh' version '0.7.3' apply false
 }
@@ -13,7 +14,11 @@ allprojects {
 }
 
 subprojects {
-	apply plugin: 'fabric-loom'
+	if (project.name != 'forge') {
+		apply plugin: 'fabric-loom'
+	} else {
+		apply plugin: 'net.neoforged.moddev.legacyforge'
+	}
 	apply plugin: 'org.jetbrains.kotlin.jvm'
 
 	repositories {
@@ -21,8 +26,10 @@ subprojects {
 	}
 
 	dependencies {
-		minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-		mappings "net.fabricmc:yarn:${rootProject.yarn_mappings}:v2"
+		if (project.name != 'forge') {
+			minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+			mappings loom.officialMojangMappings()
+		}
 
 		implementation("com.github.ben-manes.caffeine:caffeine:${rootProject.caffeine_version}") {
 			exclude group: 'org.checkerframework', module: 'checker-qual'
@@ -59,13 +66,28 @@ subprojects {
 
 // Explicit root tasks also work when invoked with an absolute task path.
 tasks.named('assemble') {
-	dependsOn ':common:assemble', ':fabric:assemble'
+	dependsOn ':common:assemble', ':fabric:assemble', ':forge:assemble'
 }
 
 tasks.named('check') {
-	dependsOn ':common:check', ':fabric:check'
+	dependsOn ':common:check', ':fabric:check', ':forge:check'
 }
 
 tasks.named('clean') {
-	dependsOn ':common:clean', ':fabric:clean'
+	dependsOn ':common:clean', ':fabric:clean', ':forge:clean'
+}
+
+// Preserve the existing root commands without launching both loaders at once.
+tasks.register('runClient') {
+    impliesSubProjects = true
+    group = 'fabric'
+    description = 'Runs the Fabric client. Use :forge:runClient for Forge.'
+    dependsOn ':fabric:runClient'
+}
+
+tasks.register('runServer') {
+    impliesSubProjects = true
+    group = 'fabric'
+    description = 'Runs the Fabric server. Use :forge:runServer for Forge.'
+    dependsOn ':fabric:runServer'
 }

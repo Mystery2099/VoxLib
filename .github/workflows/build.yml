@@ -9,7 +9,7 @@ jobs:
       matrix:
         # Use these Java versions
         java: [
-          17,    # Current Java LTS & minimum supported by Minecraft
+          17,    # Minecraft compile and runtime target
         ]
         # and run on both Linux and Windows
         os: [ubuntu-22.04, windows-2022]
@@ -18,10 +18,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Set up JDK ${{ matrix.java }}
+      - name: Set up build and game JDKs
         uses: actions/setup-java@v5
         with:
-          java-version: ${{ matrix.java }}
+          java-version: |
+            ${{ matrix.java }}
+            21
           distribution: 'microsoft'
 
       - name: Set up Gradle
@@ -38,4 +40,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
-          path: fabric/build/libs/
+          path: |
+            fabric/build/libs/
+            forge/build/libs/

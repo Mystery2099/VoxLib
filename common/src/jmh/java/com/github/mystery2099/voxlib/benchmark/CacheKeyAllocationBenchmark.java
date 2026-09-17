@@ -6,8 +6,8 @@ import com.github.mystery2099.voxlib.optimization.ShapeCacheKey;
 import com.github.mystery2099.voxlib.rotation.VoxelRotation;
 import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation;
 import java.util.List;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
@@ -46,7 +46,7 @@ public class CacheKeyAllocationBenchmark {
         );
         return ShapeCache.INSTANCE.getOrCompute(
             key,
-            ignored -> VoxelShapes.union(left, right)
+            ignored -> Shapes.or(left, right)
         );
     }
 

@@ -1,12 +1,12 @@
 package com.github.mystery2099.voxlib.optimization
 
 import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
-import net.minecraft.util.math.Box
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.shapes.VoxelShape
+import net.minecraft.world.phys.shapes.Shapes
 
 /**
- * A utility class for simplifying complex VoxelShapes to improve performance.
+ * A utility class for simplifying complex Shapes to improve performance.
  *
  * Complex shapes with many boxes can cause performance issues, especially
  * when used for outlines that change frequently. This class provides methods
@@ -22,10 +22,10 @@ object ShapeSimplifier {
      * @return A simplified VoxelShape based on the original's bounding box.
      */
     fun simplifyToBoundingBox(shape: VoxelShape): VoxelShape {
-        if (shape.isEmpty) return VoxelShapes.empty()
+        if (shape.isEmpty) return Shapes.empty()
 
-        val boundingBox = shape.boundingBox
-        return VoxelShapes.cuboid(boundingBox)
+        val boundingBox = shape.bounds()
+        return Shapes.create(boundingBox)
     }
 
     /**
@@ -39,9 +39,9 @@ object ShapeSimplifier {
     fun simplify(shape: VoxelShape, maxBoxes: Int = 8): VoxelShape {
         require(maxBoxes >= 1) { "maxBoxes must be at least 1" }
 
-        val boxes = mutableListOf<Box>()
-        shape.forEachBox { minX, minY, minZ, maxX, maxY, maxZ ->
-            boxes.add(Box(minX, minY, minZ, maxX, maxY, maxZ))
+        val boxes = mutableListOf<AABB>()
+        shape.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
+            boxes.add(AABB(minX, minY, minZ, maxX, maxY, maxZ))
         }
 
         if (boxes.size <= maxBoxes) return shape
@@ -54,22 +54,22 @@ object ShapeSimplifier {
             mergeClosestBoxesWithScan(boxes, maxBoxes)
         }
 
-        return simplifiedBoxes.fold(VoxelShapes.empty()) { acc, box ->
-            VoxelShapes.union(acc, VoxelShapes.cuboid(box))
+        return simplifiedBoxes.fold(Shapes.empty()) { acc, box ->
+            Shapes.or(acc, Shapes.create(box))
         }
     }
 
-    private fun mergeClosestBoxesWithQueue(boxes: List<Box>, maxBoxes: Int): List<Box> =
+    private fun mergeClosestBoxesWithQueue(boxes: List<AABB>, maxBoxes: Int): List<AABB> =
         DeterministicBoxMerger.mergeClosest(boxes, maxBoxes)
 
-    private fun mergeClosestBoxesWithScan(boxes: MutableList<Box>, maxBoxes: Int): List<Box> {
+    private fun mergeClosestBoxesWithScan(boxes: MutableList<AABB>, maxBoxes: Int): List<AABB> {
         while (boxes.size > maxBoxes) {
             mergeClosestPairWithScan(boxes)
         }
         return boxes
     }
 
-    private fun mergeClosestPairWithScan(boxes: MutableList<Box>) {
+    private fun mergeClosestPairWithScan(boxes: MutableList<AABB>) {
         var closestFirst = 0
         var closestSecond = 1
         var minimumDistance = Double.MAX_VALUE
@@ -98,7 +98,7 @@ object ShapeSimplifier {
      * @param box2 The second box.
      * @return The distance between the boxes.
      */
-    private fun calculateBoxDistance(box1: Box, box2: Box): Double {
+    private fun calculateBoxDistance(box1: AABB, box2: AABB): Double {
         val dx = maxOf(0.0, maxOf(box1.minX - box2.maxX, box2.minX - box1.maxX))
         val dy = maxOf(0.0, maxOf(box1.minY - box2.maxY, box2.minY - box1.maxY))
         val dz = maxOf(0.0, maxOf(box1.minZ - box2.maxZ, box2.minZ - box1.maxZ))
@@ -113,8 +113,8 @@ object ShapeSimplifier {
      * @param box2 The second box.
      * @return A new box that contains both input boxes.
      */
-    private fun mergeBoxes(box1: Box, box2: Box): Box {
-        return Box(
+    private fun mergeBoxes(box1: AABB, box2: AABB): AABB {
+        return AABB(
             minOf(box1.minX, box2.minX),
             minOf(box1.minY, box2.minY),
             minOf(box1.minZ, box2.minZ),
@@ -159,12 +159,12 @@ object ShapeSimplifier {
             minXd + t, minYd + t, minZd + t,
             maxXd - t, maxYd - t, maxZd - t
         )
-        return VoxelShapes.combineAndSimplify(
+        return Shapes.join(
             outerBox, innerBox,
-            net.minecraft.util.function.BooleanBiFunction.ONLY_FIRST
+            net.minecraft.world.phys.shapes.BooleanOp.ONLY_FIRST
         )
     }
 
-    /** Box counts where the priority-queue merger wins; outside this, use the scan. */
+    /** AABB counts where the priority-queue merger wins; outside this, use the scan. */
     private val PRIORITY_QUEUE_BOX_RANGE = 96..256
 }

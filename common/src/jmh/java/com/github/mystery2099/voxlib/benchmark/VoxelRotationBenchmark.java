@@ -3,7 +3,7 @@ package com.github.mystery2099.voxlib.benchmark;
 import com.github.mystery2099.voxlib.optimization.ShapeCache;
 import com.github.mystery2099.voxlib.rotation.VoxelRotation;
 import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation;
-import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Group;
 import org.openjdk.jmh.annotations.GroupThreads;
