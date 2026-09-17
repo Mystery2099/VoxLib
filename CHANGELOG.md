@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a Forge 1.20.1 build with bundled Kotlin and Caffeine
+- Added Forge config-screen and targeted shape-highlight integration
+
+
 ### Changed
+
+- Shared client configuration and debug rendering between Fabric and Forge
+- Switched development sources to Mojang mappings for both loaders
+- Added loader suffixes to distributable filenames; kept Fabric Maven coordinates and added `voxlib-forge`
 
 - Ported the Fabric mod and common library to Minecraft 1.20.1
 - Updated Yarn mappings, Fabric API, and Mod Menu for 1.20.1

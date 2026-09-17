@@ -1,15 +1,15 @@
 # VoxLib
 
-A Minecraft Fabric library mod that provides utilities for manipulating,
+A Minecraft Fabric and Forge library mod that provides utilities for manipulating,
 creating, and rotating voxel shapes in your code!
 
 ![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
-![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)
+![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20Forge-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
 ## What is VoxLib?
 
-VoxLib is a lightweight Fabric library that simplifies working with Minecraft's
+VoxLib is a lightweight Fabric and Forge library that simplifies working with Minecraft's
 `VoxelShape` API. It provides intuitive extensions and utilities for creating,
 combining, transforming, and reusing voxel shapes—perfect for custom blocks and
 items that need precise collision or outline shapes.
@@ -88,7 +88,7 @@ val fenceConnections = CommonShapes.createFenceConnections(north = true, east = 
 
 ## Adding VoxLib as a Dependency
 
-Use a published `VERSION` built for Minecraft 1.20.1 in the examples below.
+Use a published `VERSION` built for Minecraft 1.20.1 in the Fabric examples below. Forge uses `com.github.mystery2099:voxlib-forge:VERSION` with ForgeGradle's `fg.deobf`. Install the JAR for your loader. Forge bundles Kotlin and Caffeine; Fabric requires Fabric API and Fabric Language Kotlin.
 
 ### Using JitPack (Easiest)
 
@@ -140,7 +140,7 @@ dependencies {
 | | |
 |---|---|
 | **Minecraft** | 1.20.1 |
-| **Mod Loader** | Fabric |
+| **Mod Loader** | Fabric or Forge |
 | **Language** | Kotlin |
 | **Java** | 17+ |
 | **Environment** | Client + Server |
