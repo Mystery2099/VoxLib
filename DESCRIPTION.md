@@ -127,7 +127,7 @@ dependencies {
 
 | | |
 |---|---|
-| **Minecraft** | 1.20.5 and 1.20.6 |
+| **Minecraft** | 1.20.6 |
 | **Mod Loader** | Fabric or NeoForge |
 | **Language** | Kotlin |
 | **Java** | 21+ |

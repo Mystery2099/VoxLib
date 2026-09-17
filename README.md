@@ -316,7 +316,7 @@ For full documentation of all available utilities, see the KDoc comments in the 
 
 ## Compatibility
 
-- Minecraft 1.20.5 and 1.20.6
+- Minecraft 1.20.6
 - Fabric Loader 0.18.4 or newer, or NeoForge 20.6.x
 - Java 21 or newer
 - Client and dedicated server
