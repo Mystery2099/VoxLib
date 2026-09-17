@@ -9,17 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added a NeoForge build with bundled Kotlin and Caffeine
-- Added NeoForge config-screen and targeted shape-highlight integration
-- Added a Forge 1.20.1 build with bundled Kotlin and Caffeine
-- Added Forge config-screen and targeted shape-highlight integration
-
+- Nothing yet.
 
 ### Changed
 
 - Reused vanilla bounding-box helpers and removed temporary boxes from debug rendering
 - Deprecated the misleading `and` union alias in favor of `+`, preserving its existing behavior and JVM method
 - Fixed unions with full cubes discarding geometry outside the block bounds
+- Converted the NeoForge entrypoints from Java to Kotlin
 
 - Updated Fabric Loader to 0.19.5, Fabric Language Kotlin to 1.14.1, and Kotlin to 2.4.20
 - Updated Loom to 1.18.2 and the build daemon to Java 25; the mod still targets Java 21
@@ -29,6 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Fabric API to 0.116.17, NeoForge to 21.1.250, and Mod Menu to 11.0.4
 - Updated loader compatibility metadata and the resource pack format for 1.21.1
 - Adapted NeoForge config-screen registration to its 1.21.1 API
+
+## [1.7.0] - 2026-09-17
+
+### Added
+
+- Added a NeoForge build with bundled Kotlin and Caffeine
+- Added NeoForge config-screen and targeted shape-highlight integration
+- Added a Forge 1.20.1 build with bundled Kotlin and Caffeine
+- Added Forge config-screen and targeted shape-highlight integration
+
+### Changed
 
 - Ported the mod to Minecraft 1.20.6, raising the mod to Java 21 and Fabric API 0.99.4
 - Replaced the Forge module with a NeoForge module published as `voxlib-neoforge` via ModDevGradle
@@ -65,37 +73,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added independent targeted block outline and collision shape overlays
-
-### Changed
-
-- Added ModMenu to local Fabric runtime testing
-
-### Fixed
-
-- Preserved configuration defaults when loading partial JSON
-- Serialized configuration updates and file writes
-- Kept debug shape transparency independent from configured RGB color
-
-## [1.5.0] - 2025-12-30
-
-### Added
-
 - Debug tools infrastructure with client-side support
 - `VoxLibConfig` - Validated, persisted client debug settings
 - `VoxelShapeDebugClient` - Client-only debug state management
 - Client environment guards for `VoxelShapeDebug` rendering methods
 - `renderShapeWithConfig()` helper method using client config settings
 - Native config screen with debug mode, color, alpha, and reset controls
+- Client entrypoint `VoxLibClient` for debug features
+- Optional ModMenu integration for config UI access
+- Added ModMenu to local Fabric runtime testing
+- Independent targeted block outline and collision shape overlays
 
 ### Changed
 
-- Updated version to 1.5.0+1.19.4
-- Added client entrypoint `VoxLibClient` for debug features
-- Added optional ModMenu integration for config UI access
+- Updated version to 1.6.0+1.19.4
 
 ### Fixed
 
+- Preserved configuration defaults when loading partial JSON
+- Serialized configuration updates and file writes
+- Kept debug shape transparency independent from configured RGB color
 - Added client-side environment guards to prevent server crashes
 - Prevented cache hash collisions from returning unrelated shapes
 - Handled empty bounding-box simplification and invalid box limits safely
@@ -187,7 +184,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial project setup
 - Basic mod structure
 
-[1.5.0]: https://github.com/Mystery2099/VoxLib/compare/v1.4.0%2B1.19.4...v1.5.0%2B1.19.4
+[Unreleased]: https://github.com/Mystery2099/VoxLib/compare/v1.7.0%2B1.20.6...HEAD
+[1.7.0]: https://github.com/Mystery2099/VoxLib/compare/v1.6.1%2B1.19.4...v1.7.0%2B1.20.6
+[1.6.1]: https://github.com/Mystery2099/VoxLib/compare/v1.6.0%2B1.19.4...v1.6.1%2B1.19.4
+[1.6.0]: https://github.com/Mystery2099/VoxLib/compare/v1.4.0%2B1.19.4...v1.6.0%2B1.19.4
 [1.4.0]: https://github.com/Mystery2099/VoxLib/compare/v1.2.0...v1.4.0%2B1.19.4
 [1.2.0]: https://github.com/Mystery2099/VoxLib/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Mystery2099/VoxLib/compare/v1.0.0...v1.1.0
