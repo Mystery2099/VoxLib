@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated the wrapper to Gradle 9.7.1 and the build daemon to Java 21 while retaining Java 17 mod compatibility
+- Replaced ForgeGradle with ModDevGradle's legacy Forge plugin for Gradle 9 support
+
 - Shared client configuration and debug rendering between Fabric and Forge
 - Switched development sources to Mojang mappings for both loaders
 - Added loader suffixes to distributable filenames; kept Fabric Maven coordinates and added `voxlib-forge`

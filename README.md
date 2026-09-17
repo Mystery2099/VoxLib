@@ -77,7 +77,7 @@ For more information on GitHub Packages, see [Working with a GitHub Packages Reg
 
 For Fabric, install Fabric API and Fabric Language Kotlin versions compatible with Minecraft 1.20.1. For Forge, use the Forge JAR; Kotlin's standard library and Caffeine are bundled, so Kotlin for Forge is not required.
 
-The existing `com.github.mystery2099:voxlib:VERSION` Maven coordinate remains the Fabric artifact. Forge uses `com.github.mystery2099:voxlib-forge:VERSION`. With ForgeGradle, declare it as `implementation fg.deobf("com.github.mystery2099:voxlib-forge:VERSION")`. Choose a published version for your loader.
+The existing `com.github.mystery2099:voxlib:VERSION` Maven coordinate remains the Fabric artifact. Forge uses `com.github.mystery2099:voxlib-forge:VERSION`. With ModDevGradle, declare it as `modImplementation "com.github.mystery2099:voxlib-forge:VERSION"`. ForgeGradle consumers can use `implementation fg.deobf("com.github.mystery2099:voxlib-forge:VERSION")`. Choose a published version for your loader.
 
 ### Building from Source
 
@@ -87,16 +87,16 @@ If you would rather use a local build:
 ./gradlew build
 ```
 
-The distributable JARs are `fabric/build/libs/voxlib-fabric-VERSION.jar` and `forge/build/libs/voxlib-forge-VERSION.jar`. The Forge `-slim.jar` is an intermediate artifact without bundled libraries; install the JAR without a classifier. Sources JARs are provided for both loaders. `./gradlew publishToMavenLocal` publishes both loader artifacts for use with `mavenLocal()`.
+The distributable JARs are `fabric/build/libs/voxlib-fabric-VERSION.jar` and `forge/build/libs/voxlib-forge-VERSION.jar`. Sources JARs are provided for both loaders. `./gradlew publishToMavenLocal` publishes both loader artifacts for use with `mavenLocal()`.
 
-Install JDK 17 before building. Gradle's daemon JVM configuration selects it even when your shell defaults to another Java version.
+Install JDK 21 and JDK 17 before building. The Gradle 9 wrapper selects JDK 21 for the build daemon; Minecraft and compiled mod classes still use Java 17.
 
 ## Project layout
 
 - `common/src/main` contains the geometry, rotation, caching, and simplification APIs, shared initialization, and assets. It has no loader or client dependencies.
 - `common/src/client` contains the shared settings screen, JSON configuration, and debug rendering. Each loader compiles these sources into its own mod.
 - `fabric` contains Fabric entrypoints, the world-render callback, and Mod Menu integration. Fabric Loom compiles and remaps the mod.
-- `forge` contains Forge entrypoints, the block-highlight event adapter, and config-screen registration. ForgeGradle compiles the shared sources and reobfuscates the distributable JAR.
+- `forge` contains Forge entrypoints, the block-highlight event adapter, and config-screen registration. ModDevGradle's legacy Forge plugin compiles the shared sources and reobfuscates the distributable JAR.
 
 All source code uses Mojang mappings for Minecraft 1.20.1. The common module uses Loom only to provide vanilla Minecraft for compilation and benchmarks; its JAR is a development artifact, not an installable mod. There is no Architectury dependency.
 
@@ -107,7 +107,7 @@ All source code uses Mojang mappings for Minecraft 1.20.1. The common module use
 | Client | `./gradlew :fabric:runClient` | `./gradlew :forge:runClient` |
 | Dedicated server | `./gradlew :fabric:runServer` | `./gradlew :forge:runServer` |
 
-The root `runClient` and `runServer` commands default to Fabric. Each loader uses its own `run` directory. The JSON settings filename and debug behavior are the same on both loaders. Fabric exposes settings through Mod Menu; Forge exposes them through its Mods screen.
+The root `runClient` and `runServer` commands default to Fabric. Each loader uses its own `run` directory. The JSON settings filename and debug behavior are the same on both loaders. Fabric exposes settings through Mod Menu; enable **Show libraries** to see VoxLib. Forge exposes settings through its Mods screen.
 
 ## Usage Examples
 
