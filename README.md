@@ -85,7 +85,20 @@ If you would rather use a local build:
 ./gradlew build
 ```
 
-The finished mod JAR will be written to `build/libs`. You can also run `./gradlew publishToMavenLocal` and use `mavenLocal()` while developing another mod.
+The finished mod JAR will be written to `fabric/build/libs`. You can also run `./gradlew publishToMavenLocal` and use `mavenLocal()` while developing another mod.
+
+## Project layout
+
+- `common` contains the geometry, rotation, caching, and simplification APIs, benchmarks, and shared assets. It uses Minecraft 1.19.4 with Yarn mappings and has no Fabric Loader or Fabric API dependency.
+- `fabric` contains the Fabric entrypoints, client debug rendering, configuration UI, Mod Menu integration, and mod metadata. The existing debug and config APIs remain here because they depend on Fabric and each other.
+
+Both modules currently use Loom to provide mapped Minecraft classes. This split prepares the core for another loader; Fabric is still the only supported loader.
+
+Run `./gradlew build` to build both modules. Focused smoke checks verify required API classes, common classes, the shared icon, and entrypoints in the Fabric JAR, and reject client or Fabric references in common bytecode. They also verify established public JVM method signatures and initialize every class in the common JAR with client and Fabric class loading blocked. These checks run before publishing, or directly with `./gradlew :fabric:verifyModJar`. Run just the common API and class-loading check with `./gradlew :common:verifyCommonJar`. They use JDK APIs and require no test framework.
+
+The distributable mod and sources JARs are in `fabric/build/libs/`; the mod includes the common classes and assets. The common JAR is a development artifact, not an installable mod.
+
+Use `./gradlew :fabric:runClient` or `./gradlew :fabric:runServer` for development. Run benchmarks with `./gradlew :common:jmh`. Publishing remains on the Fabric module and keeps the existing Maven coordinates.
 
 ## Usage Examples
 
