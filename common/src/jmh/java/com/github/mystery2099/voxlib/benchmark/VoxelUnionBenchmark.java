@@ -2,8 +2,8 @@ package com.github.mystery2099.voxlib.benchmark;
 
 import com.github.mystery2099.voxlib.combination.VoxelAssembly;
 import com.github.mystery2099.voxlib.optimization.ShapeCache;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Group;
 import org.openjdk.jmh.annotations.GroupThreads;
@@ -32,7 +32,7 @@ public class VoxelUnionBenchmark {
 
     @Benchmark
     public VoxelShape vanillaBinaryUnion(BinaryUnionState state) {
-        return VoxelShapes.union(state.left, state.right);
+        return Shapes.or(state.left, state.right);
     }
 
     @Benchmark
@@ -71,7 +71,7 @@ public class VoxelUnionBenchmark {
 
     @Benchmark
     public VoxelShape vanillaColdBinaryUnion(ColdBinaryUnionState state) {
-        return VoxelShapes.union(state.left, state.right);
+        return Shapes.or(state.left, state.right);
     }
 
     @Benchmark
@@ -81,7 +81,7 @@ public class VoxelUnionBenchmark {
 
     @Benchmark
     public VoxelShape vanillaDisjointBinaryUnion(DisjointBinaryUnionState state) {
-        return VoxelShapes.union(state.left, state.right);
+        return Shapes.or(state.left, state.right);
     }
 
     @Benchmark
@@ -135,7 +135,7 @@ public class VoxelUnionBenchmark {
 
     @Benchmark
     public VoxelShape vanillaMultiUnion(MultiUnionState state) {
-        return VoxelShapes.union(state.first, state.remaining);
+        return Shapes.or(state.first, state.remaining);
     }
 
     @Benchmark
@@ -160,7 +160,7 @@ public class VoxelUnionBenchmark {
 
     @Benchmark
     public VoxelShape vanillaColdMultiUnion(ColdMultiUnionState state) {
-        return VoxelShapes.union(state.first, state.remaining);
+        return Shapes.or(state.first, state.remaining);
     }
 
     @Benchmark

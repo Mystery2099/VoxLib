@@ -3,8 +3,8 @@ package com.github.mystery2099.voxlib.optimization
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.mystery2099.voxlib.rotation.VoxelShapeTransformation
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import net.minecraft.world.phys.shapes.VoxelShape
+import net.minecraft.world.phys.shapes.Shapes
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
@@ -80,10 +80,10 @@ object ShapeCache {
 
     /**
      * Binary union with recent-pair admission. Equivalent to
-     * `getOrComputeUnion(first, second) { VoxelShapes.union(first, second) }`.
+     * `getOrComputeUnion(first, second) { Shapes.or(first, second) }`.
      */
     internal fun getOrComputeUnion(first: VoxelShape, second: VoxelShape): VoxelShape =
-        getOrComputeUnion(first, second) { VoxelShapes.union(first, second) }
+        getOrComputeUnion(first, second) { Shapes.or(first, second) }
 
     /**
      * Binary union with recent-pair admission.

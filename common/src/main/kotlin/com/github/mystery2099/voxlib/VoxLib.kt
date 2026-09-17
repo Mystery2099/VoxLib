@@ -1,16 +1,12 @@
 package com.github.mystery2099.voxlib
 
-import net.fabricmc.api.ModInitializer
-import net.fabricmc.api.ClientModInitializer
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
 import org.slf4j.LoggerFactory
 
 /**
  * Main entry point for the VoxLib mod.
  * This library provides utilities for manipulating, creating, and rotating voxel shapes.
  */
-object VoxLib : ModInitializer {
+object VoxLib {
     private val logger = LoggerFactory.getLogger("voxlib")
 
     /**
@@ -23,18 +19,9 @@ object VoxLib : ModInitializer {
      */
     private const val MINECRAFT_VERSION = "1.20.1"
 
-	override fun onInitialize() {
+	fun onInitialize() {
         logger.info("Initializing VoxLib v$VERSION for Minecraft $MINECRAFT_VERSION")
         logger.info("VoxLib is ready to help with your voxel shape needs!")
 	}
 }
 
-/**
- * Client-only entry point for VoxLib debug features.
- */
-@Environment(EnvType.CLIENT)
-object VoxLibClient : ClientModInitializer {
-    override fun onInitializeClient() {
-        com.github.mystery2099.voxlib.debug.VoxelShapeDebugClient.initialize()
-    }
-}

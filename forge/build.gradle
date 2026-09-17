@@ -1,0 +1,132 @@
+plugins {
+    id 'maven-publish'
+}
+
+base {
+    archivesName = "${rootProject.archives_base_name}-forge"
+}
+
+minecraft {
+    mappings channel: 'official', version: rootProject.minecraft_version
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            mods {
+                voxlib { source sourceSets.main }
+            }
+        }
+        client {}
+        server { args '--nogui' }
+    }
+}
+
+sourceSets.main {
+    java.srcDir rootProject.file('common/src/main/java')
+    kotlin.srcDirs rootProject.file('common/src/main/kotlin'), rootProject.file('common/src/client/kotlin')
+    resources.srcDir rootProject.file('common/src/main/resources')
+}
+
+jarJar.enable()
+
+dependencies {
+    minecraftLibrary("com.github.ben-manes.caffeine:caffeine:${rootProject.caffeine_version}") { transitive = false }
+    minecraftLibrary('org.jetbrains.kotlin:kotlin-stdlib:2.3.0') { transitive = false }
+    minecraft "net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}"
+    jarJar("com.github.ben-manes.caffeine:caffeine:[${rootProject.caffeine_version},4.0)") {
+        jarJar.pin(it, rootProject.caffeine_version)
+        transitive = false
+    }
+    jarJar('org.jetbrains.kotlin:kotlin-stdlib:[2.3.0,3.0)') {
+        jarJar.pin(it, '2.3.0')
+        transitive = false
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/mods.toml') { expand version: project.version }
+}
+
+jar { archiveClassifier = 'slim' }
+reobf { jarJar {} }
+tasks.named('jarJar') {
+    archiveClassifier = ''
+    from(rootProject.file('LICENSE')) { rename { "${it}_${rootProject.archives_base_name}" } }
+    finalizedBy 'reobfJarJar'
+}
+tasks.named('assemble') { dependsOn 'jarJar' }
+
+// Check the distributable after reobfuscation, including its bundled runtime.
+def modJar = tasks.named('jarJar').flatMap { it.archiveFile }
+def verifyModJar = tasks.register('verifyModJar') {
+    group = 'verification'
+    description = 'Checks Forge metadata, shared classes, and bundled runtime libraries.'
+    dependsOn ':common:verifyCommonJar', 'reobfJarJar'
+    inputs.file(modJar)
+    doLast {
+        new java.util.zip.ZipFile(modJar.get().asFile).withCloseable { mod ->
+            def requireEntry = { name ->
+                def entry = mod.getEntry(name)
+                if (entry == null) throw new GradleException("Forge JAR is missing ${name}")
+                entry
+            }
+            ['VoxLib', 'combination/VoxelAssembly', 'rotation/VoxelRotation',
+             'shapes/CommonShapes', 'optimization/ShapeCache', 'optimization/ShapeSimplifier',
+             'config/VoxLibConfig', 'config/VoxLibConfigScreen', 'debug/VoxelShapeDebug',
+             'debug/VoxelShapeDebugClient', 'forge/VoxLibForge', 'forge/VoxLibForgeClient'].each {
+                requireEntry("com/github/mystery2099/voxlib/${it}.class")
+            }
+            requireEntry('META-INF/mods.toml')
+            requireEntry('assets/voxlib/icon.png')
+            requireEntry('pack.mcmeta')
+            requireEntry("LICENSE_${rootProject.archives_base_name}")
+            if (mod.getEntry('fabric.mod.json') != null) {
+                throw new GradleException('Forge JAR contains Fabric metadata')
+            }
+            def bundled = mod.getInputStream(requireEntry('META-INF/jarjar/metadata.json')).withCloseable {
+                new groovy.json.JsonSlurper().parse(it)
+            }
+            ['caffeine', 'kotlin-stdlib'].each { artifact ->
+                def library = bundled.jars.find { it.identifier.artifact == artifact }
+                if (library == null) throw new GradleException("Forge JAR is missing bundled ${artifact}")
+                requireEntry(library.path)
+            }
+        }
+    }
+}
+
+tasks.named('check') { dependsOn verifyModJar }
+tasks.withType(org.gradle.api.publish.maven.tasks.AbstractPublishToMaven).configureEach {
+    dependsOn verifyModJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact(tasks.named('jarJar'))
+            artifact(tasks.named('sourcesJar'))
+            artifactId = "${rootProject.archives_base_name}-forge"
+            pom {
+                name = 'VoxLib Forge'
+                description = 'Voxel shape utilities for Minecraft Forge'
+                url = 'https://github.com/Mystery2099/VoxLib'
+                licenses {
+                    license {
+                        name = 'Minecraft Mod Public License 1.0.1'
+                        url = 'https://github.com/Mystery2099/VoxLib/blob/master/LICENSE'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/Mystery2099/VoxLib')
+            credentials {
+                username = System.getenv('GITHUB_ACTOR') ?: project.findProperty('gpr.user') ?: 'username'
+                password = System.getenv('GITHUB_TOKEN') ?: project.findProperty('gpr.key') ?: 'token'
+            }
+        }
+    }
+}

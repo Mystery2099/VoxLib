@@ -1,7 +1,7 @@
 package com.github.mystery2099.voxlib.benchmark;
 
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 
 final class BenchmarkFixtures {
     private BenchmarkFixtures() {
@@ -11,7 +11,7 @@ final class BenchmarkFixtures {
         if (boxCount > 64) {
             throw new IllegalArgumentException("complexShape supports at most 64 boxes");
         }
-        VoxelShape result = VoxelShapes.empty();
+        VoxelShape result = Shapes.empty();
         for (int index = 0; index < boxCount; index++) {
             int x = index & 3;
             int y = (index >> 2) & 3;
@@ -19,11 +19,11 @@ final class BenchmarkFixtures {
             double minX = phase + x * 0.2;
             double minY = y * 0.2;
             double minZ = z * 0.2;
-            VoxelShape box = VoxelShapes.cuboid(
+            VoxelShape box = Shapes.box(
                 minX, minY, minZ,
                 minX + 0.11, minY + 0.11, minZ + 0.11
             );
-            result = VoxelShapes.union(result, box);
+            result = Shapes.or(result, box);
         }
         return result;
     }
@@ -37,7 +37,7 @@ final class BenchmarkFixtures {
             double minX = phase + x * 0.2;
             double minY = y * 0.2;
             double minZ = z * 0.2;
-            shapes[index] = VoxelShapes.cuboid(
+            shapes[index] = Shapes.box(
                 minX, minY, minZ,
                 minX + 0.11, minY + 0.11, minZ + 0.11
             );
@@ -46,12 +46,12 @@ final class BenchmarkFixtures {
     }
 
     static VoxelShape simplifierShape(int boxCount) {
-        VoxelShape result = VoxelShapes.empty();
+        VoxelShape result = Shapes.empty();
         for (int index = 0; index < boxCount; index++) {
             double minX = index * 0.125;
-            result = VoxelShapes.union(
+            result = Shapes.or(
                 result,
-                VoxelShapes.cuboid(minX, 0.0, 0.0, minX + 0.0625, 0.0625, 0.0625)
+                Shapes.box(minX, 0.0, 0.0, minX + 0.0625, 0.0625, 0.0625)
             );
         }
         return result;

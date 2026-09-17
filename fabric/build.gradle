@@ -4,10 +4,12 @@ plugins {
 
 evaluationDependsOn(':common')
 
+sourceSets.main.kotlin.srcDir rootProject.file('common/src/client/kotlin')
+
 def commonProject = project(':common')
 
 base {
-	archivesName = rootProject.archives_base_name
+	archivesName = "${rootProject.archives_base_name}-fabric"
 }
 
 repositories {
@@ -100,8 +102,8 @@ def verifyModJar = tasks.register('verifyModJar') {
 						def bytecode = common.getInputStream(entry).withCloseable {
 							new String(it.readAllBytes(), java.nio.charset.StandardCharsets.ISO_8859_1)
 						}
-						if (bytecode.contains('net/minecraft/client/') || bytecode.contains('net/fabricmc/')) {
-							throw new GradleException("Common class ${entry.name} references client or Fabric code")
+						if (bytecode.contains('net/minecraft/client/') || bytecode.contains('net/fabricmc/') || bytecode.contains('net/minecraftforge/')) {
+							throw new GradleException("Common class ${entry.name} references client or loader code")
 						}
 					}
 				}

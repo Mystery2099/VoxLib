@@ -3,10 +3,7 @@ package com.github.mystery2099.voxlib.config
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.InstanceCreator
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
-import net.fabricmc.loader.api.FabricLoader
-import net.minecraft.client.gui.screen.Screen
+import net.minecraft.client.gui.screens.Screen
 import org.slf4j.LoggerFactory
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -23,7 +20,6 @@ import java.nio.file.StandardCopyOption
  * @param debugShapeColor Color used for debug shape rendering (ARGB format)
  * @param debugShapeAlpha Transparency of debug shapes (0.0-1.0)
  */
-@Environment(EnvType.CLIENT)
 data class VoxLibConfig(
     var debugModeEnabled: Boolean = false,
     var showTargetedOutline: Boolean = false,
@@ -36,6 +32,16 @@ data class VoxLibConfig(
     )
 
     companion object {
+        private var configDirectory: Path = Path.of("config")
+
+        /** Called by the client loader before reading configuration. */
+        @Synchronized
+        fun initialize(directory: Path) {
+            configDirectory = directory
+            instance = null
+            getOrCreate()
+        }
+
         private const val CONFIG_FILE_NAME = "voxlib-client.json"
         internal const val DEFAULT_COLOR = 0xFFFF0000.toInt()
         internal const val DEFAULT_ALPHA = 0.4f
@@ -90,7 +96,7 @@ data class VoxLibConfig(
         }
 
         private fun getConfigFile(): Path =
-            FabricLoader.getInstance().configDir.resolve(CONFIG_FILE_NAME)
+            configDirectory.resolve(CONFIG_FILE_NAME)
 
         private fun loadFromFile(): VoxLibConfig {
             val file = getConfigFile()

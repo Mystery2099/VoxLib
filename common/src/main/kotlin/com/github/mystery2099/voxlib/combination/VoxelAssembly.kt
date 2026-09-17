@@ -3,14 +3,14 @@ package com.github.mystery2099.voxlib.combination
 import com.github.mystery2099.voxlib.optimization.ShapeCache
 import com.github.mystery2099.voxlib.optimization.ShapeSimplifier
 import com.github.mystery2099.voxlib.optimization.Minecraft1201ShapeOps
-import net.minecraft.util.function.BooleanBiFunction
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import net.minecraft.world.phys.shapes.BooleanOp
+import net.minecraft.world.phys.shapes.VoxelShape
+import net.minecraft.world.phys.shapes.Shapes
 
 /**
- * A utility object for working with VoxelShapes in Minecraft game development.
+ * A utility object for working with Shapes in Minecraft game development.
  *
- * This object provides various functions for creating, combining, and modifying VoxelShapes,
+ * This object provides various functions for creating, combining, and modifying Shapes,
  * which are used to represent the collision and shape of objects in the game world.
  *
  * This class includes optimizations for better performance with complex shapes.
@@ -40,7 +40,7 @@ object VoxelAssembly {
         maxX: Number,
         maxY: Number,
         maxZ: Number
-    ): VoxelShape = VoxelShapes.cuboid(
+    ): VoxelShape = Shapes.box(
         minX.toDouble() / BLOCK_COORDINATE_SCALE,
         minY.toDouble() / BLOCK_COORDINATE_SCALE,
         minZ.toDouble() / BLOCK_COORDINATE_SCALE,
@@ -56,20 +56,20 @@ object VoxelAssembly {
      *
      * @return A new VoxelShape representing the union of the two input shapes.
      *
-     * @see VoxelShapes.union
+     * @see Shapes.or
      */
     infix fun VoxelShape.and(otherShape: VoxelShape): VoxelShape {
         return unionWithCache(this, otherShape)
     }
 
     /**
-     * Allows the use of the '+' and '+=' operators to combine VoxelShapes.
+     * Allows the use of the '+' and '+=' operators to combine Shapes.
      *
      * @param otherShape The VoxelShape to be combined with the receiver using the union operation.
      *
      * @return A new VoxelShape representing the union of the two input shapes.
      *
-     * @see VoxelShapes.union
+     * @see Shapes.or
      * @see and
      */
     operator fun VoxelShape.plus(otherShape: VoxelShape): VoxelShape =
@@ -78,15 +78,15 @@ object VoxelAssembly {
     private fun unionWithCache(shape1: VoxelShape, shape2: VoxelShape): VoxelShape {
         if (shape1.isEmpty) return shape2
         if (shape2.isEmpty) return shape1
-        if (shape1 === VoxelShapes.fullCube()) return shape1
-        if (shape2 === VoxelShapes.fullCube()) return shape2
+        if (shape1 === Shapes.block()) return shape1
+        if (shape2 === Shapes.block()) return shape2
         return ShapeCache.getOrComputeUnion(shape1, shape2)
     }
 
     /**
-     * Combines a single VoxelShape with additional VoxelShapes using the union operation.
+     * Combines a single VoxelShape with additional Shapes using the union operation.
      *
-     * @param otherShapes Additional VoxelShapes to combine with the receiver.
+     * @param otherShapes Additional Shapes to combine with the receiver.
      * @return A new VoxelShape representing the union of all shapes.
      *
      * @see union
@@ -95,38 +95,38 @@ object VoxelAssembly {
 
 
     /**
-     * Combines a list of VoxelShapes using the provided boolean function.
+     * Combines a list of Shapes using the provided boolean function.
      *
-     * @param function The boolean function used for combining VoxelShapes.
-     * @param voxelShapes A list of VoxelShapes to be combined.
+     * @param function The boolean function used for combining Shapes.
+     * @param voxelShapes A list of Shapes to be combined.
      *
      * @return A new VoxelShape resulting from the combination of the input shapes.
      *
-     * @see VoxelShapes.combine
+     * @see Shapes.joinUnoptimized
      */
-    fun combine(function: BooleanBiFunction, vararg voxelShapes: VoxelShape): VoxelShape {
-        if (voxelShapes.isEmpty()) return VoxelShapes.empty()
+    fun combine(function: BooleanOp, vararg voxelShapes: VoxelShape): VoxelShape {
+        if (voxelShapes.isEmpty()) return Shapes.empty()
 
-        return voxelShapes.reduce { a, b -> VoxelShapes.combine(a, b, function) }
+        return voxelShapes.reduce { a, b -> Shapes.joinUnoptimized(a, b, function) }
     }
 
     /**
-     * Unifies or combines a list of VoxelShapes into a single VoxelShape.
+     * Unifies or combines a list of Shapes into a single VoxelShape.
      * Uses an optimized algorithm for better performance with many shapes.
      *
-     * @param voxelShapes A list of VoxelShapes to be unified.
+     * @param voxelShapes A list of Shapes to be unified.
      *
      * @return A new VoxelShape representing the union of all input shapes.
      *
-     * @see VoxelShapes.union
+     * @see Shapes.or
      */
     fun union(vararg voxelShapes: VoxelShape): VoxelShape {
-        if (voxelShapes.isEmpty()) return VoxelShapes.empty()
+        if (voxelShapes.isEmpty()) return Shapes.empty()
         if (voxelShapes.size == 1) return voxelShapes[0]
 
-        val nonEmptyShapes = filterNonEmptyShapes(voxelShapes) ?: return VoxelShapes.fullCube()
+        val nonEmptyShapes = filterNonEmptyShapes(voxelShapes) ?: return Shapes.block()
         return when (nonEmptyShapes.size) {
-            0 -> VoxelShapes.empty()
+            0 -> Shapes.empty()
             1 -> nonEmptyShapes[0]
             2 -> ShapeCache.getOrComputeUnion(nonEmptyShapes[0], nonEmptyShapes[1])
             else -> unionMany(nonEmptyShapes)
@@ -140,7 +140,7 @@ object VoxelAssembly {
     private fun filterNonEmptyShapes(voxelShapes: Array<out VoxelShape>): Array<out VoxelShape>? {
         var nonEmptyCount = 0
         for (shape in voxelShapes) {
-            if (shape === VoxelShapes.fullCube()) return null
+            if (shape === Shapes.block()) return null
             if (!shape.isEmpty) nonEmptyCount++
         }
         if (nonEmptyCount == 0) return EMPTY_SHAPE_ARRAY

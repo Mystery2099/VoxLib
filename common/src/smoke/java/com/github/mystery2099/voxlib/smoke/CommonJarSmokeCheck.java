@@ -26,8 +26,8 @@ public final class CommonJarSmokeCheck {
         try (URLClassLoader loader = new URLClassLoader(classpath.toArray(URL[]::new), ClassLoader.getPlatformClassLoader()) {
             @Override
             protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-                if (name.startsWith("net.minecraft.client.") || name.startsWith("net.fabricmc.")) {
-                    throw new ClassNotFoundException("Common code tried to load a client or Fabric class: " + name);
+                if (name.startsWith("net.minecraft.client.") || name.startsWith("net.fabricmc.") || name.startsWith("net.minecraftforge.")) {
+                    throw new ClassNotFoundException("Common code tried to load a client or loader class: " + name);
                 }
                 return super.loadClass(name, resolve);
             }
@@ -45,7 +45,7 @@ public final class CommonJarSmokeCheck {
                     type.getDeclaredConstructors();
                     type.getDeclaredMethods();
                 } catch (ReflectiveOperationException | LinkageError exception) {
-                    throw new AssertionError("Common class cannot load without client or Fabric access: " + className, exception);
+                    throw new AssertionError("Common class cannot load without client or loader access: " + className, exception);
                 }
                 count++;
             }
@@ -55,7 +55,7 @@ public final class CommonJarSmokeCheck {
     }
 
     private static void verifyPublicApi(ClassLoader loader) throws Exception {
-        Class<?> shape = loader.loadClass("net.minecraft.util.shape.VoxelShape");
+        Class<?> shape = loader.loadClass("net.minecraft.world.phys.shapes.VoxelShape");
         Class<?> shapes = shape.arrayType();
         Class<?> function1 = loader.loadClass("kotlin.jvm.functions.Function1");
         Class<?> assembly = loader.loadClass(PACKAGE + "combination.VoxelAssembly");
@@ -64,7 +64,7 @@ public final class CommonJarSmokeCheck {
         requireMethod(assembly, "and", shape, shape, shape);
         requireMethod(assembly, "plus", shape, shape, shape);
         requireMethod(assembly, "unifyWith", shape, shape, shapes);
-        requireMethod(assembly, "combine", shape, loader.loadClass("net.minecraft.util.function.BooleanBiFunction"), shapes);
+        requireMethod(assembly, "combine", shape, loader.loadClass("net.minecraft.world.phys.shapes.BooleanOp"), shapes);
         requireMethod(assembly, "union", shape, shapes);
         requireMethod(assembly, "appendShapesTo", shape, shape, function1);
         requireMethod(assembly, "appendShapes", shape, shape, function1);
@@ -90,7 +90,7 @@ public final class CommonJarSmokeCheck {
         requireMethod(commonShapes, "createChair", shape, int.class, boolean.class, int.class);
         requireMethod(commonShapes, "createFencePost", shape);
         requireMethod(commonShapes, "createFenceConnections", shape, boolean.class, boolean.class, boolean.class, boolean.class);
-        requireMethod(commonShapes, "createStairs", shape, loader.loadClass("net.minecraft.util.math.Direction"));
+        requireMethod(commonShapes, "createStairs", shape, loader.loadClass("net.minecraft.core.Direction"));
 
         Class<?> cache = loader.loadClass(PACKAGE + "optimization.ShapeCache");
         Class<?> key = loader.loadClass(PACKAGE + "optimization.ShapeCacheKey");

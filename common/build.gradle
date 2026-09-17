@@ -6,7 +6,7 @@ base {
 	archivesName = "${rootProject.archives_base_name}-common"
 }
 
-// Loom supplies Minecraft and Yarn for compilation; common has no loader dependency.
+// Loom supplies Minecraft and Mojang mappings for compilation; common has no loader dependency.
 loom {
 	runs.configureEach {
 		ideConfigGenerated = false

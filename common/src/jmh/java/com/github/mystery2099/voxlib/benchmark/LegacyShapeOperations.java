@@ -6,25 +6,25 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
 
 final class LegacyShapeOperations {
     private LegacyShapeOperations() {
     }
 
     static VoxelShape rotate(VoxelShape shape, VoxelShapeTransformation transformation) {
-        if (shape.isEmpty() || shape == VoxelShapes.fullCube()) {
+        if (shape.isEmpty() || shape == Shapes.block()) {
             return shape;
         }
 
         List<VoxelShape> boxes = new ArrayList<>();
-        shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) -> {
+        shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
             double[] coordinates = transform(
                 transformation, minX, minY, minZ, maxX, maxY, maxZ
             );
-            boxes.add(VoxelShapes.cuboid(
+            boxes.add(Shapes.box(
                 coordinates[0], coordinates[1], coordinates[2],
                 coordinates[3], coordinates[4], coordinates[5]
             ));
@@ -33,27 +33,27 @@ final class LegacyShapeOperations {
     }
 
     static VoxelShape simplify(VoxelShape shape, int maxBoxes) {
-        List<Box> boxes = new ArrayList<>();
-        shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) ->
-            boxes.add(new Box(minX, minY, minZ, maxX, maxY, maxZ))
+        List<AABB> boxes = new ArrayList<>();
+        shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) ->
+            boxes.add(new AABB(minX, minY, minZ, maxX, maxY, maxZ))
         );
         while (boxes.size() > maxBoxes) {
             mergeClosestBoxes(boxes);
         }
 
-        VoxelShape result = VoxelShapes.empty();
-        for (Box box : boxes) {
-            result = VoxelShapes.union(result, VoxelShapes.cuboid(box));
+        VoxelShape result = Shapes.empty();
+        for (AABB box : boxes) {
+            result = Shapes.or(result, Shapes.create(box));
         }
         return result;
     }
 
     static VoxelShape objectQueueSimplify(VoxelShape shape, int maxBoxes) {
         List<ActiveBox> boxes = new ArrayList<>();
-        shape.forEachBox((minX, minY, minZ, maxX, maxY, maxZ) ->
+        shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) ->
             boxes.add(new ActiveBox(
                 boxes.size(),
-                new Box(minX, minY, minZ, maxX, maxY, maxZ)
+                new AABB(minX, minY, minZ, maxX, maxY, maxZ)
             ))
         );
         PriorityQueue<MergeCandidate> candidates = new PriorityQueue<>(MergeCandidate.ORDER);
@@ -82,10 +82,10 @@ final class LegacyShapeOperations {
             activeCount--;
         }
 
-        VoxelShape result = VoxelShapes.empty();
+        VoxelShape result = Shapes.empty();
         for (ActiveBox box : boxes) {
             if (box.active) {
-                result = VoxelShapes.union(result, VoxelShapes.cuboid(box.box));
+                result = Shapes.or(result, Shapes.create(box.box));
             }
         }
         return result;
@@ -94,7 +94,7 @@ final class LegacyShapeOperations {
     static VoxelShape leftFoldUnion(VoxelShape[] shapes) {
         VoxelShape result = shapes[0];
         for (int index = 1; index < shapes.length; index++) {
-            result = VoxelShapes.union(result, shapes[index]);
+            result = Shapes.or(result, shapes[index]);
         }
         return result;
     }
@@ -109,7 +109,7 @@ final class LegacyShapeOperations {
 
     static VoxelShape table(int legWidth, int topThickness) {
         int legOffset = 16 - legWidth;
-        return VoxelShapes.union(
+        return Shapes.or(
             cuboid(0, 16 - topThickness, 0, 16, 16, 16),
             cuboid(0, 0, 0, legWidth, 16 - topThickness, legWidth),
             cuboid(legOffset, 0, 0, 16, 16 - topThickness, legWidth),
@@ -134,19 +134,19 @@ final class LegacyShapeOperations {
         VoxelShape seat = cuboid(1, seatHeight, 1, 15, seatHeight + 2, 15);
         VoxelShape legs = cuboid(2, 0, 2, 14, seatHeight, 14);
         if (!hasBackrest) {
-            return VoxelShapes.union(seat, legs);
+            return Shapes.or(seat, legs);
         }
         VoxelShape backrest = cuboid(
             2, seatHeight + 2, 12, 14, seatHeight + 2 + backrestHeight, 15
         );
-        return VoxelShapes.union(seat, legs, backrest);
+        return Shapes.or(seat, legs, backrest);
     }
 
     private static VoxelShape cuboid(
         double minX, double minY, double minZ,
         double maxX, double maxY, double maxZ
     ) {
-        return VoxelShapes.cuboid(
+        return Shapes.box(
             minX / 16.0, minY / 16.0, minZ / 16.0,
             maxX / 16.0, maxY / 16.0, maxZ / 16.0
         );
@@ -155,7 +155,7 @@ final class LegacyShapeOperations {
     private static VoxelShape balancedUnion(List<VoxelShape> shapes, int from, int to) {
         int size = to - from;
         if (size == 0) {
-            return VoxelShapes.empty();
+            return Shapes.empty();
         }
         if (size == 1) {
             return shapes.get(from);
@@ -163,12 +163,12 @@ final class LegacyShapeOperations {
         if (size <= 4) {
             VoxelShape result = shapes.get(from);
             for (int index = from + 1; index < to; index++) {
-                result = VoxelShapes.union(result, shapes.get(index));
+                result = Shapes.or(result, shapes.get(index));
             }
             return result;
         }
         int middle = from + size / 2;
-        return VoxelShapes.union(
+        return Shapes.or(
             balancedUnion(shapes, from, middle),
             balancedUnion(shapes, middle, to)
         );
@@ -181,13 +181,13 @@ final class LegacyShapeOperations {
         if (shapes.size() <= 4) {
             VoxelShape result = shapes.get(0);
             for (int index = 1; index < shapes.size(); index++) {
-                result = VoxelShapes.union(result, shapes.get(index));
+                result = Shapes.or(result, shapes.get(index));
             }
             return result;
         }
 
         int middle = shapes.size() / 2;
-        return VoxelShapes.union(
+        return Shapes.or(
             legacyBalancedUnion(shapes.subList(0, middle)),
             legacyBalancedUnion(shapes.subList(middle, shapes.size()))
         );
@@ -205,13 +205,13 @@ final class LegacyShapeOperations {
         if (size <= 4) {
             VoxelShape result = shapes[fromIndex];
             for (int index = fromIndex + 1; index < toIndex; index++) {
-                result = VoxelShapes.union(result, shapes[index]);
+                result = Shapes.or(result, shapes[index]);
             }
             return result;
         }
 
         int middle = fromIndex + size / 2;
-        return VoxelShapes.union(
+        return Shapes.or(
             allocationFreeBalancedUnion(shapes, fromIndex, middle),
             allocationFreeBalancedUnion(shapes, middle, toIndex)
         );
@@ -236,7 +236,7 @@ final class LegacyShapeOperations {
         };
     }
 
-    private static void mergeClosestBoxes(List<Box> boxes) {
+    private static void mergeClosestBoxes(List<AABB> boxes) {
         int closestFirst = 0;
         int closestSecond = 1;
         double minimumDistance = Double.MAX_VALUE;
@@ -251,13 +251,13 @@ final class LegacyShapeOperations {
             }
         }
 
-        Box merged = encompass(boxes.get(closestFirst), boxes.get(closestSecond));
+        AABB merged = encompass(boxes.get(closestFirst), boxes.get(closestSecond));
         boxes.remove(closestSecond);
         boxes.remove(closestFirst);
         boxes.add(merged);
     }
 
-    private static double distance(Box first, Box second) {
+    private static double distance(AABB first, AABB second) {
         if (first.intersects(second)) {
             return 0.0;
         }
@@ -267,8 +267,8 @@ final class LegacyShapeOperations {
         return dx * dx + dy * dy + dz * dz;
     }
 
-    private static Box encompass(Box first, Box second) {
-        return new Box(
+    private static AABB encompass(AABB first, AABB second) {
+        return new AABB(
             Math.min(first.minX, second.minX),
             Math.min(first.minY, second.minY),
             Math.min(first.minZ, second.minZ),
@@ -291,10 +291,10 @@ final class LegacyShapeOperations {
 
     private static final class ActiveBox {
         final int position;
-        final Box box;
+        final AABB box;
         boolean active = true;
 
-        ActiveBox(int position, Box box) {
+        ActiveBox(int position, AABB box) {
             this.position = position;
             this.box = box;
         }

@@ -16,7 +16,7 @@
 	"entrypoints": {
 		"main": [
 			{
-				"value": "com.github.mystery2099.voxlib.VoxLib",
+				"value": "com.github.mystery2099.voxlib.VoxLibFabric",
 				"adapter": "kotlin"
 			}
 		],
@@ -35,7 +35,7 @@
 	},
 	"depends": {
 		"fabricloader": ">=0.18.4",
-		"minecraft": "~1.20.1",
+		"minecraft": "1.20.1",
 		"java": ">=17",
 		"fabric-api": ">=0.92.12+1.20.1",
 		"fabric-language-kotlin": ">=1.13.8+kotlin.2.3.0"

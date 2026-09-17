@@ -1,49 +1,46 @@
 package com.github.mystery2099.voxlib.config
 
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
-import net.minecraft.client.gui.screen.Screen
-import net.minecraft.client.gui.widget.ButtonWidget
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.text.Text
+import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.gui.components.Button
+import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.network.chat.Component
 import kotlin.math.roundToInt
 
-@Environment(EnvType.CLIENT)
-internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.literal("VoxLib Settings")) {
+internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Component.literal("VoxLib Settings")) {
     private var config = VoxLibConfig.get()
 
     override fun init() {
         super.init()
 
         val startY = height / 2 - 82
-        addDrawableChild(createDebugModeButton(startY))
-        addDrawableChild(createTargetOutlineButton(startY + 24))
-        addDrawableChild(createTargetCollisionButton(startY + 48))
-        addDrawableChild(createColorButton(startY + 72))
-        addDrawableChild(createAlphaButton(startY + 96))
-        addDrawableChild(createResetButton(startY + 128))
-        addDrawableChild(createDoneButton(startY + 152))
+        addRenderableWidget(createDebugModeButton(startY))
+        addRenderableWidget(createTargetOutlineButton(startY + 24))
+        addRenderableWidget(createTargetCollisionButton(startY + 48))
+        addRenderableWidget(createColorButton(startY + 72))
+        addRenderableWidget(createAlphaButton(startY + 96))
+        addRenderableWidget(createResetButton(startY + 128))
+        addRenderableWidget(createDoneButton(startY + 152))
     }
 
-    private fun createDebugModeButton(y: Int): ButtonWidget =
+    private fun createDebugModeButton(y: Int): Button =
         button(debugModeText(), y) { widget ->
             update(config.copy(debugModeEnabled = !config.debugModeEnabled))
             widget.message = debugModeText()
         }
 
-    private fun createTargetOutlineButton(y: Int): ButtonWidget =
+    private fun createTargetOutlineButton(y: Int): Button =
         button(targetOutlineText(), y) { widget ->
             update(config.copy(showTargetedOutline = !config.showTargetedOutline))
             widget.message = targetOutlineText()
         }
 
-    private fun createTargetCollisionButton(y: Int): ButtonWidget =
+    private fun createTargetCollisionButton(y: Int): Button =
         button(targetCollisionText(), y) { widget ->
             update(config.copy(showTargetedCollision = !config.showTargetedCollision))
             widget.message = targetCollisionText()
         }
 
-    private fun createColorButton(y: Int): ButtonWidget =
+    private fun createColorButton(y: Int): Button =
         button(colorText(), y) { widget ->
             val currentIndex = COLOR_OPTIONS.indexOfFirst { it.value == config.debugShapeColor }
             val nextIndex = (currentIndex + 1).coerceAtLeast(0) % COLOR_OPTIONS.size
@@ -51,7 +48,7 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.lite
             widget.message = colorText()
         }
 
-    private fun createAlphaButton(y: Int): ButtonWidget =
+    private fun createAlphaButton(y: Int): Button =
         button(alphaText(), y) { widget ->
             val nextAlpha = if (config.debugShapeAlpha >= 1.0f) {
                 0.1f
@@ -62,23 +59,23 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.lite
             widget.message = alphaText()
         }
 
-    private fun createResetButton(y: Int): ButtonWidget =
-        button(Text.literal("Reset to Defaults"), y) {
+    private fun createResetButton(y: Int): Button =
+        button(Component.literal("Reset to Defaults"), y) {
             update(VoxLibConfig.default())
-            client?.setScreen(VoxLibConfigScreen(parent))
+            minecraft?.setScreen(VoxLibConfigScreen(parent))
         }
 
-    private fun createDoneButton(y: Int): ButtonWidget =
-        button(Text.literal("Done"), y) {
-            close()
+    private fun createDoneButton(y: Int): Button =
+        button(Component.literal("Done"), y) {
+            onClose()
         }
 
     private fun button(
-        message: Text,
+        message: Component,
         y: Int,
-        onPress: (ButtonWidget) -> Unit
-    ): ButtonWidget = ButtonWidget.builder(message, onPress)
-        .dimensions(width / 2 - 100, y, 200, 20)
+        onPress: (Button) -> Unit
+    ): Button = Button.builder(message, onPress)
+        .bounds(width / 2 - 100, y, 200, 20)
         .build()
 
     private fun update(newConfig: VoxLibConfig) {
@@ -86,29 +83,29 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.lite
         VoxLibConfig.update(config)
     }
 
-    private fun debugModeText(): Text =
-        Text.literal("Debug Mode: ${if (config.debugModeEnabled) "ON" else "OFF"}")
+    private fun debugModeText(): Component =
+        Component.literal("Debug Mode: ${if (config.debugModeEnabled) "ON" else "OFF"}")
 
-    private fun targetOutlineText(): Text =
-        Text.literal("Target Outline: ${if (config.showTargetedOutline) "ON" else "OFF"}")
+    private fun targetOutlineText(): Component =
+        Component.literal("Target Outline: ${if (config.showTargetedOutline) "ON" else "OFF"}")
 
-    private fun targetCollisionText(): Text =
-        Text.literal("Target Collision: ${if (config.showTargetedCollision) "ON" else "OFF"}")
+    private fun targetCollisionText(): Component =
+        Component.literal("Target Collision: ${if (config.showTargetedCollision) "ON" else "OFF"}")
 
-    private fun colorText(): Text {
+    private fun colorText(): Component {
         val name = COLOR_OPTIONS.firstOrNull { it.value == config.debugShapeColor }?.name ?: "Custom"
-        return Text.literal("Color: $name")
+        return Component.literal("Color: $name")
     }
 
-    private fun alphaText(): Text =
-        Text.literal("Alpha: ${(config.debugShapeAlpha * 100).roundToInt()}%")
+    private fun alphaText(): Component =
+        Component.literal("Alpha: ${(config.debugShapeAlpha * 100).roundToInt()}%")
 
-    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         renderBackground(context)
-        context.drawText(
-            textRenderer,
+        context.drawString(
+            font,
             title,
-            (width - textRenderer.getWidth(title)) / 2,
+            (width - font.width(title)) / 2,
             20,
             0xFFFFFF,
             false
@@ -116,8 +113,8 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.lite
         super.render(context, mouseX, mouseY, delta)
     }
 
-    override fun close() {
-        client?.setScreen(parent)
+    override fun onClose() {
+        minecraft?.setScreen(parent)
     }
 
     private data class ColorOption(val name: String, val value: Int)

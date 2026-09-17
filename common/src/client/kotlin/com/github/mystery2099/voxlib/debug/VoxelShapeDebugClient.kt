@@ -2,23 +2,24 @@ package com.github.mystery2099.voxlib.debug
 
 import com.github.mystery2099.voxlib.config.VoxLibConfig
 import com.github.mystery2099.voxlib.optimization.ShapeCache
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
-import net.minecraft.block.ShapeContext
-import net.minecraft.client.MinecraftClient
-import net.minecraft.text.Text
-import net.minecraft.util.function.BooleanBiFunction
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import net.minecraft.world.phys.shapes.CollisionContext
+import net.minecraft.client.Minecraft
+import net.minecraft.network.chat.Component
+import net.minecraft.world.phys.shapes.BooleanOp
+import net.minecraft.world.phys.shapes.VoxelShape
+import net.minecraft.world.phys.shapes.Shapes
 import java.awt.Color
+import com.mojang.blaze3d.vertex.PoseStack
+import net.minecraft.client.renderer.MultiBufferSource
+import net.minecraft.core.BlockPos
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.state.BlockState
 
 /**
  * Client-only entry point for VoxLib debug features.
  * Handles client-side initialization and debug state management.
  */
-@Environment(EnvType.CLIENT)
 object VoxelShapeDebugClient {
 
     /**
@@ -41,9 +42,9 @@ object VoxelShapeDebugClient {
     fun toggleDebugMode(): Boolean {
         val config = getConfig().copy(debugModeEnabled = !isDebugModeEnabled())
         updateConfig(config)
-        val client = MinecraftClient.getInstance()
-        client.player?.sendMessage(
-            Text.literal("[VoxLib] Debug mode: ${if (config.debugModeEnabled) "ENABLED" else "DISABLED"}"),
+        val client = Minecraft.getInstance()
+        client.player?.displayClientMessage(
+            Component.literal("[VoxLib] Debug mode: ${if (config.debugModeEnabled) "ENABLED" else "DISABLED"}"),
             false
         )
         return config.debugModeEnabled
@@ -77,39 +78,40 @@ object VoxelShapeDebugClient {
      */
     fun initialize() {
         VoxLibConfig.getOrCreate()
-        WorldRenderEvents.BLOCK_OUTLINE.register { context, target ->
-            renderTargetedShapes(context, target)
-        }
     }
 
-    private fun renderTargetedShapes(
-        context: WorldRenderContext,
-        target: WorldRenderContext.BlockOutlineContext
+    /** Returns whether the loader should render the vanilla block highlight. */
+    fun renderTargetedShapes(
+        matrices: PoseStack,
+        consumers: MultiBufferSource,
+        world: Level,
+        pos: BlockPos,
+        state: BlockState,
+        entity: Entity,
+        cameraX: Double,
+        cameraY: Double,
+        cameraZ: Double
     ): Boolean {
         val config = getConfig()
         if (!config.debugModeEnabled || (!config.showTargetedOutline && !config.showTargetedCollision)) {
             return true
         }
 
-        val consumers = context.consumers() ?: return true
-        val pos = target.blockPos()
-        val state = target.blockState()
-        val shapeContext = ShapeContext.of(target.entity())
+        val shapeContext = CollisionContext.of(entity)
         val outlineShape = if (config.showTargetedOutline) {
-            state.getOutlineShape(context.world(), pos, shapeContext)
+            state.getShape(world, pos, shapeContext)
         } else {
             null
         }
         val collisionShape = if (config.showTargetedCollision) {
-            state.getCollisionShape(context.world(), pos, shapeContext)
+            state.getCollisionShape(world, pos, shapeContext)
         } else {
             null
         }
 
-        val matrices = context.matrixStack()
         val color = Color(config.debugShapeColor and 0xFFFFFF)
-        matrices.push()
-        matrices.translate(-target.cameraX(), -target.cameraY(), -target.cameraZ())
+        matrices.pushPose()
+        matrices.translate(-cameraX, -cameraY, -cameraZ)
         try {
             outlineShape?.let {
                 VoxelShapeDebug.renderShape(matrices, consumers, it, pos, color, config.debugShapeAlpha)
@@ -118,12 +120,12 @@ object VoxelShapeDebugClient {
                 VoxelShapeDebug.renderShape(matrices, consumers, collisionShape, pos, color, config.debugShapeAlpha)
             }
         } finally {
-            matrices.pop()
+            matrices.popPose()
         }
 
         return false
     }
 
     private fun shapesDiffer(first: VoxelShape?, second: VoxelShape): Boolean =
-        first == null || VoxelShapes.matchesAnywhere(first, second, BooleanBiFunction.NOT_SAME)
+        first == null || Shapes.joinIsNotEmpty(first, second, BooleanOp.NOT_SAME)
 }

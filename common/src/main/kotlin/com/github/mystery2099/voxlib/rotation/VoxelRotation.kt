@@ -2,12 +2,12 @@ package com.github.mystery2099.voxlib.rotation
 
 import com.github.mystery2099.voxlib.optimization.Minecraft1201ShapeOps
 import com.github.mystery2099.voxlib.optimization.ShapeCache
-import net.minecraft.util.shape.VoxelShape
-import net.minecraft.util.shape.VoxelShapes
+import net.minecraft.world.phys.shapes.VoxelShape
+import net.minecraft.world.phys.shapes.Shapes
 
 /**
- * A utility object for performing rotations and flips on VoxelShapes.
- * It provides methods to rotate and flip VoxelShapes in various ways.
+ * A utility object for performing rotations and flips on Shapes.
+ * It provides methods to rotate and flip Shapes in various ways.
  *
  * This class uses caching to improve performance for frequently transformed shapes.
  */
@@ -123,8 +123,8 @@ object VoxelRotation {
         transformation: VoxelShapeTransformation
     ): VoxelShape {
         // Handle special cases for better performance
-        if (shape.isEmpty) return VoxelShapes.empty()
-        if (shape === VoxelShapes.fullCube()) return VoxelShapes.fullCube()
+        if (shape.isEmpty) return Shapes.empty()
+        if (shape === Shapes.block()) return Shapes.block()
 
         return ShapeCache.getOrComputeTransformation(shape, transformation) {
             Minecraft1201ShapeOps.transformBoxes(shape, transformation)
