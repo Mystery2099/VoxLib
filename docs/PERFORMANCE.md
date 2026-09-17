@@ -115,7 +115,9 @@ gates remain direct mean comparisons.
 ## Representative results
 
 The latest three-fork acceptance run was collected on Linux with an AMD Ryzen
-7 7735HS and Amazon Corretto 17.0.20. Values are average time:
+7 7735HS and Amazon Corretto 17.0.20, before the project required Java 21 for
+Minecraft 1.20.6. These figures are historical Java 17 results and do not
+represent the committed Java 21 configuration. Values are average time:
 
 | Workload | Baseline | VoxLib | Observation |
 |---|---:|---:|---|
