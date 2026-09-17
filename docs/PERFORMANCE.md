@@ -50,7 +50,7 @@ implementation with a stable object-queue implementation instead.
 
 The standalone creation baseline calls `VoxelShapes.cuboid` with coordinates
 divided by 16. This is the implementation of `Block.createCuboidShape` in
-Minecraft 1.19.4, but avoids initializing unrelated block registries in the
+Minecraft 1.20.1, but avoids initializing unrelated block registries in the
 standalone JMH process.
 
 Cold primitive-factory and rotation benchmarks use `Level.Invocation` setup to

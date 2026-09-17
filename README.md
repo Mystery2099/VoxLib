@@ -2,7 +2,7 @@
 
 A Minecraft Fabric library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.19.4-green)
+![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
@@ -43,7 +43,7 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions), such as `1.4.0+1.19.4`. Modrinth does not require a username or access token.
+Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions) for Minecraft 1.20.1. Modrinth does not require a username or access token.
 
 #### GitHub Packages
 
@@ -75,7 +75,7 @@ The token needs the `read:packages` scope. Avoid committing it to your project.
 
 For more information on GitHub Packages, see [Working with a GitHub Packages Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#using-a-published-package)
 
-VoxLib also requires Fabric API and Fabric Language Kotlin at runtime. Use versions compatible with Minecraft 1.19.4.
+VoxLib also requires Fabric API and Fabric Language Kotlin at runtime. Use versions compatible with Minecraft 1.20.1.
 
 ### Building from Source
 
@@ -89,7 +89,7 @@ The finished mod JAR will be written to `fabric/build/libs`. You can also run `.
 
 ## Project layout
 
-- `common` contains the geometry, rotation, caching, and simplification APIs, benchmarks, and shared assets. It uses Minecraft 1.19.4 with Yarn mappings and has no Fabric Loader or Fabric API dependency.
+- `common` contains the geometry, rotation, caching, and simplification APIs, benchmarks, and shared assets. It uses Minecraft 1.20.1 with Yarn mappings and has no Fabric Loader or Fabric API dependency.
 - `fabric` contains the Fabric entrypoints, client debug rendering, configuration UI, Mod Menu integration, and mod metadata. The existing debug and config APIs remain here because they depend on Fabric and each other.
 
 Both modules currently use Loom to provide mapped Minecraft classes. This split prepares the core for another loader; Fabric is still the only supported loader.
@@ -307,7 +307,7 @@ For full documentation of all available utilities, see the KDoc comments in the 
 
 ## Compatibility
 
-- Minecraft 1.19.4
+- Minecraft 1.20.1
 - Fabric Loader 0.18.4 or newer
 - Java 17 or newer
 - Client and dedicated server

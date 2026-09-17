@@ -3,7 +3,7 @@
 A Minecraft Fabric library mod that provides utilities for manipulating,
 creating, and rotating voxel shapes in your code!
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.19.4-green)
+![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
@@ -88,6 +88,8 @@ val fenceConnections = CommonShapes.createFenceConnections(north = true, east = 
 
 ## Adding VoxLib as a Dependency
 
+Use a published `VERSION` built for Minecraft 1.20.1 in the examples below.
+
 ### Using JitPack (Easiest)
 
 ```gradle
@@ -96,7 +98,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation 'com.github.Mystery2099:VoxLib:v1.5.0+1.19.4'
+    modImplementation 'com.github.Mystery2099:VoxLib:vVERSION'
 }
 ```
 
@@ -129,7 +131,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation "com.github.mystery2099:voxlib:1.5.0+1.19.4"
+    modImplementation "com.github.mystery2099:voxlib:VERSION"
 }
 ```
 
@@ -137,7 +139,7 @@ dependencies {
 
 | | |
 |---|---|
-| **Minecraft** | 1.19.4 |
+| **Minecraft** | 1.20.1 |
 | **Mod Loader** | Fabric |
 | **Language** | Kotlin |
 | **Java** | 17+ |
