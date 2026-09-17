@@ -30,7 +30,7 @@ sourceSets.main {
 dependencies {
     // Runtime libraries are explicit to avoid duplicate annotation modules on the module path.
     additionalRuntimeClasspath("com.github.ben-manes.caffeine:caffeine:${rootProject.caffeine_version}") { transitive = false }
-    additionalRuntimeClasspath('org.jetbrains.kotlin:kotlin-stdlib:2.3.0') { transitive = false }
+    additionalRuntimeClasspath('org.jetbrains.kotlin:kotlin-stdlib:2.4.20') { transitive = false }
     jarJar('com.github.ben-manes.caffeine:caffeine') {
         version {
             strictly "[${rootProject.caffeine_version},4.0)"
@@ -40,8 +40,8 @@ dependencies {
     }
     jarJar('org.jetbrains.kotlin:kotlin-stdlib') {
         version {
-            strictly '[2.3.0,3.0)'
-            prefer '2.3.0'
+            strictly '[2.4.20,3.0)'
+            prefer '2.4.20'
         }
         transitive = false
     }

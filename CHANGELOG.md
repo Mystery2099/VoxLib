@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated Fabric Loader to 0.19.5, Fabric Language Kotlin to 1.14.1, and Kotlin to 2.4.20
+- Updated Loom to 1.18.2 and the build daemon to Java 25; the mod still targets Java 21
+- Updated CI checkout, Java setup, and artifact upload actions to their latest release lines
+
+- Ported both Fabric and NeoForge builds to Minecraft 1.21.1
+- Updated Fabric API to 0.116.17, NeoForge to 21.1.250, and Mod Menu to 11.0.4
+- Updated loader compatibility metadata and the resource pack format for 1.21.1
+- Adapted NeoForge config-screen registration to its 1.21.1 API
+
 - Ported the mod to Minecraft 1.20.6, raising the mod to Java 21 and Fabric API 0.99.4
 - Replaced the Forge module with a NeoForge module published as `voxlib-neoforge` via ModDevGradle
 - Updated Mod Menu to 10.0.0 and raised the Java requirement to 21

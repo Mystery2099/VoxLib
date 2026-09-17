@@ -16,7 +16,7 @@ internal object VoxLibNeoForgeClient {
         VoxelShapeDebugClient.initialize()
         modContainer.registerExtensionPoint(
             IConfigScreenFactory::class.java,
-            IConfigScreenFactory { _: Minecraft, parent: Screen ->
+            IConfigScreenFactory { _: ModContainer, parent: Screen ->
                 VoxLibConfig.createConfigScreen(parent)
             }
         )

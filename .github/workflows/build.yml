@@ -16,13 +16,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up build and game JDKs
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: |
             ${{ matrix.java }}
+            25
           distribution: 'microsoft'
 
       - name: Set up Gradle
@@ -36,7 +37,7 @@ jobs:
 
       - name: Capture build artifacts
         if: ${{ runner.os == 'Linux' && matrix.java == '21' }} # Only upload artifacts built from latest java on one OS
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Artifacts
           path: |
