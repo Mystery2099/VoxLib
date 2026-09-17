@@ -102,7 +102,7 @@ def verifyModJar = tasks.register('verifyModJar') {
 						def bytecode = common.getInputStream(entry).withCloseable {
 							new String(it.readAllBytes(), java.nio.charset.StandardCharsets.ISO_8859_1)
 						}
-						if (bytecode.contains('net/minecraft/client/') || bytecode.contains('net/fabricmc/') || bytecode.contains('net/minecraftforge/')) {
+                        if (bytecode.contains('net/minecraft/client/') || bytecode.contains('net/fabricmc/') || bytecode.contains('net/minecraftforge/') || bytecode.contains('net/neoforged/')) {
 							throw new GradleException("Common class ${entry.name} references client or loader code")
 						}
 					}

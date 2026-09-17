@@ -101,7 +101,7 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Component
         Component.literal("Alpha: ${(config.debugShapeAlpha * 100).roundToInt()}%")
 
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
-        renderBackground(context)
+        renderBackground(context, mouseX, mouseY, delta)
         context.drawString(
             font,
             title,

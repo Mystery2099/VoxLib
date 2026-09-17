@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
 	id 'base'
 	id 'fabric-loom' version '1.13.6' apply false
-	id 'net.neoforged.moddev.legacyforge' version '2.0.147' apply false
+	id 'net.neoforged.moddev' version '2.0.147' apply false
 	id 'org.jetbrains.kotlin.jvm' version '2.3.0' apply false
 	id 'me.champeau.jmh' version '0.7.3' apply false
 }
@@ -14,10 +14,10 @@ allprojects {
 }
 
 subprojects {
-	if (project.name != 'forge') {
+	if (project.name != 'neoforge') {
 		apply plugin: 'fabric-loom'
 	} else {
-		apply plugin: 'net.neoforged.moddev.legacyforge'
+		apply plugin: 'net.neoforged.moddev'
 	}
 	apply plugin: 'org.jetbrains.kotlin.jvm'
 
@@ -26,7 +26,7 @@ subprojects {
 	}
 
 	dependencies {
-		if (project.name != 'forge') {
+		if (project.name != 'neoforge') {
 			minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
 			mappings loom.officialMojangMappings()
 		}
@@ -39,17 +39,17 @@ subprojects {
 
 	java {
 		withSourcesJar()
-		toolchain.languageVersion = JavaLanguageVersion.of(17)
-		sourceCompatibility = JavaVersion.VERSION_17
-		targetCompatibility = JavaVersion.VERSION_17
+		toolchain.languageVersion = JavaLanguageVersion.of(21)
+		sourceCompatibility = JavaVersion.VERSION_21
+		targetCompatibility = JavaVersion.VERSION_21
 	}
 
 	tasks.withType(JavaCompile).configureEach {
-		options.release.set(17)
+		options.release.set(21)
 	}
 
 	tasks.withType(KotlinCompile).configureEach {
-		kotlinOptions.jvmTarget = '17'
+		kotlinOptions.jvmTarget = '21'
 	}
 
 	tasks.withType(ProcessResources).configureEach {
@@ -66,28 +66,28 @@ subprojects {
 
 // Explicit root tasks also work when invoked with an absolute task path.
 tasks.named('assemble') {
-	dependsOn ':common:assemble', ':fabric:assemble', ':forge:assemble'
+	dependsOn ':common:assemble', ':fabric:assemble', ':neoforge:assemble'
 }
 
 tasks.named('check') {
-	dependsOn ':common:check', ':fabric:check', ':forge:check'
+	dependsOn ':common:check', ':fabric:check', ':neoforge:check'
 }
 
 tasks.named('clean') {
-	dependsOn ':common:clean', ':fabric:clean', ':forge:clean'
+	dependsOn ':common:clean', ':fabric:clean', ':neoforge:clean'
 }
 
 // Preserve the existing root commands without launching both loaders at once.
 tasks.register('runClient') {
     impliesSubProjects = true
     group = 'fabric'
-    description = 'Runs the Fabric client. Use :forge:runClient for Forge.'
+    description = 'Runs the Fabric client. Use :neoforge:runClient for NeoForge.'
     dependsOn ':fabric:runClient'
 }
 
 tasks.register('runServer') {
     impliesSubProjects = true
     group = 'fabric'
-    description = 'Runs the Fabric server. Use :forge:runServer for Forge.'
+    description = 'Runs the Fabric server. Use :neoforge:runServer for NeoForge.'
     dependsOn ':fabric:runServer'
 }
