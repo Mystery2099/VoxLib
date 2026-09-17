@@ -4,7 +4,7 @@ A Minecraft Fabric and NeoForge library mod that provides utilities for manipula
 creating, and rotating voxel shapes in your code!
 
 ![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.6-green)
-![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20Forge-blue)
+![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20NeoForge-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
 ## What is VoxLib?
