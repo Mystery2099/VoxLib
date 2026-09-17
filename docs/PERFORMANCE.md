@@ -50,7 +50,7 @@ implementation with a stable object-queue implementation instead.
 
 The standalone creation baseline calls `Shapes.box` with coordinates
 divided by 16. This is the implementation of `Block.box` in
-Minecraft 1.20.6, but avoids initializing unrelated block registries in the
+Minecraft 1.21.1, but avoids initializing unrelated block registries in the
 standalone JMH process.
 
 Cold primitive-factory and rotation benchmarks use `Level.Invocation` setup to

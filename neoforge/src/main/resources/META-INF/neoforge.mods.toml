@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[2,)"
+loaderVersion="[4,)"
 license="MMPL-1.0.1"
 issueTrackerURL="https://github.com/Mystery2099/VoxLib/issues"
 
@@ -14,14 +14,14 @@ description="A library for creating, combining, transforming, debugging, and reu
 
 [[dependencies.voxlib]]
 modId="neoforge"
-mandatory=true
-versionRange="[20.6,)"
+type="required"
+versionRange="[21.1.250,21.2)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.voxlib]]
 modId="minecraft"
-mandatory=true
-versionRange="[1.20.6,1.21)"
+type="required"
+versionRange="[1.21.1,1.21.2)"
 ordering="NONE"
 side="BOTH"

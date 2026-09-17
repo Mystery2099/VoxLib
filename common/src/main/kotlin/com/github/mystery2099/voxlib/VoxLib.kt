@@ -12,7 +12,7 @@ object VoxLib {
     /**
      * The current version of VoxLib.
      */
-    const val VERSION = "1.7.0+1.20.6"
+    const val VERSION = "1.7.0+1.21.1"
 
     /**
      * The mod identifier used by both loaders.
@@ -22,7 +22,7 @@ object VoxLib {
     /**
      * The Minecraft version this mod is built for.
      */
-    private const val MINECRAFT_VERSION = "1.20.6"
+    private const val MINECRAFT_VERSION = "1.21.1"
 
 	fun onInitialize() {
         logger.info("Initializing VoxLib v$VERSION for Minecraft $MINECRAFT_VERSION")

@@ -3,7 +3,7 @@
 A Minecraft Fabric and NeoForge library mod that provides utilities for manipulating,
 creating, and rotating voxel shapes in your code!
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.6-green)
+![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-green)
 ![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20NeoForge-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
@@ -88,7 +88,7 @@ val fenceConnections = CommonShapes.createFenceConnections(north = true, east = 
 
 ## Adding VoxLib as a Dependency
 
-Use a published `VERSION` built for Minecraft 1.20.6 in the Fabric examples below. NeoForge uses `com.github.mystery2099:voxlib-neoforge:VERSION` with ModDevGradle. Install the JAR for your loader. NeoForge bundles Kotlin and Caffeine; Fabric requires Fabric API and Fabric Language Kotlin.
+Use a published `VERSION` built for Minecraft 1.21.1 in the Fabric examples below. NeoForge uses `com.github.mystery2099:voxlib-neoforge:VERSION` with ModDevGradle. Install the JAR for your loader. NeoForge bundles Kotlin and Caffeine; Fabric requires Fabric API and Fabric Language Kotlin.
 
 ### Using CurseForge Maven
 
@@ -127,7 +127,7 @@ dependencies {
 
 | | |
 |---|---|
-| **Minecraft** | 1.20.6 |
+| **Minecraft** | 1.21.1 |
 | **Mod Loader** | Fabric or NeoForge |
 | **Language** | Kotlin |
 | **Java** | 21+ |

@@ -2,7 +2,7 @@
 
 A Minecraft Fabric and NeoForge library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.20.6-green)
+![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-green)
 ![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20NeoForge-blue)
 ![Language](https://img.shields.io/badge/Language-Kotlin-purple)
 
@@ -43,7 +43,7 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions) for Minecraft 1.20.6. Modrinth does not require a username or access token.
+Replace `VERSION` with a version listed on the [VoxLib Modrinth page](https://modrinth.com/mod/voxlib/versions) for Minecraft 1.21.1. Modrinth does not require a username or access token.
 
 #### GitHub Packages
 
@@ -75,7 +75,7 @@ The token needs the `read:packages` scope. Avoid committing it to your project.
 
 For more information on GitHub Packages, see [Working with a GitHub Packages Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry#using-a-published-package)
 
-For Fabric, install Fabric API and Fabric Language Kotlin versions compatible with Minecraft 1.20.6. For NeoForge, use the NeoForge JAR; Kotlin's standard library and Caffeine are bundled, so Kotlin for NeoForge is not required.
+For Fabric, install Fabric API and Fabric Language Kotlin versions compatible with Minecraft 1.21.1. For NeoForge, use the NeoForge JAR; Kotlin's standard library and Caffeine are bundled, so Kotlin for NeoForge is not required.
 
 The existing `com.github.mystery2099:voxlib:VERSION` Maven coordinate remains the Fabric artifact. NeoForge uses `com.github.mystery2099:voxlib-neoforge:VERSION`; with ModDevGradle, declare it as `modImplementation "com.github.mystery2099:voxlib-neoforge:VERSION"`. Choose a published version for your loader.
 
@@ -89,7 +89,7 @@ If you would rather use a local build:
 
 The distributable JARs are `fabric/build/libs/voxlib-fabric-VERSION.jar` and `neoforge/build/libs/voxlib-neoforge-VERSION.jar`. Sources JARs are provided for both loaders. `./gradlew publishToMavenLocal` publishes both loader artifacts for use with `mavenLocal()`.
 
-Install JDK 21 before building. Minecraft 1.20.6 requires Java 21, and the Gradle 9 wrapper uses the same JDK for the build daemon and the compiled mod.
+Install JDK 25 for the Gradle build daemon and JDK 21 for the mod toolchain. Loom 1.18 requires Java 25 to build; the compiled mod still targets Java 21 for Minecraft 1.21.1.
 
 ## Project layout
 
@@ -98,7 +98,7 @@ Install JDK 21 before building. Minecraft 1.20.6 requires Java 21, and the Gradl
 - `fabric` contains Fabric entrypoints, the world-render callback, and Mod Menu integration. Fabric Loom compiles and remaps the mod.
 - `neoforge` contains NeoForge entrypoints, the block-highlight event adapter, and config-screen registration. ModDevGradle compiles the shared sources into the distributable JAR.
 
-All source code uses Mojang mappings for Minecraft 1.20.6. The common module uses Loom only to provide vanilla Minecraft for compilation and benchmarks; its JAR is a development artifact, not an installable mod. There is no Architectury dependency.
+All source code uses Mojang mappings for Minecraft 1.21.1. The common module uses Loom only to provide vanilla Minecraft for compilation and benchmarks; its JAR is a development artifact, not an installable mod. There is no Architectury dependency.
 
 `./gradlew build` builds both loaders and runs focused packaging and common API checks. The checks verify required classes, metadata, assets, bundled NeoForge libraries, and common class loading without client or loader access. Run them separately with `:fabric:verifyModJar`, `:neoforge:verifyModJar`, or `:common:verifyCommonJar`. Benchmarks remain available through `:common:jmh`.
 
@@ -316,8 +316,8 @@ For full documentation of all available utilities, see the KDoc comments in the 
 
 ## Compatibility
 
-- Minecraft 1.20.6
-- Fabric Loader 0.18.4 or newer, or NeoForge 20.6.x
+- Minecraft 1.21.1
+- Fabric Loader 0.19.5 or newer, or NeoForge 21.1.250 or newer within 21.1.x
 - Java 21 or newer
 - Client and dedicated server
 - Mod Menu is optional and only needed for the in-game debug settings screen
