@@ -58,6 +58,10 @@ object VoxelAssembly {
      *
      * @see Shapes.or
      */
+    @Deprecated(
+        "This operation is a union. Use + to avoid confusion with intersection.",
+        ReplaceWith("this + otherShape", "com.github.mystery2099.voxlib.combination.VoxelAssembly.plus")
+    )
     infix fun VoxelShape.and(otherShape: VoxelShape): VoxelShape {
         return unionWithCache(this, otherShape)
     }
@@ -73,13 +77,11 @@ object VoxelAssembly {
      * @see and
      */
     operator fun VoxelShape.plus(otherShape: VoxelShape): VoxelShape =
-        this.and(otherShape)
+        unionWithCache(this, otherShape)
 
     private fun unionWithCache(shape1: VoxelShape, shape2: VoxelShape): VoxelShape {
         if (shape1.isEmpty) return shape2
         if (shape2.isEmpty) return shape1
-        if (shape1 === Shapes.block()) return shape1
-        if (shape2 === Shapes.block()) return shape2
         return ShapeCache.getOrComputeUnion(shape1, shape2)
     }
 
@@ -124,7 +126,7 @@ object VoxelAssembly {
         if (voxelShapes.isEmpty()) return Shapes.empty()
         if (voxelShapes.size == 1) return voxelShapes[0]
 
-        val nonEmptyShapes = filterNonEmptyShapes(voxelShapes) ?: return Shapes.block()
+        val nonEmptyShapes = filterNonEmptyShapes(voxelShapes)
         return when (nonEmptyShapes.size) {
             0 -> Shapes.empty()
             1 -> nonEmptyShapes[0]
@@ -134,13 +136,11 @@ object VoxelAssembly {
     }
 
     /**
-     * Collects non-empty shapes, or returns null if any input is a full cube
-     * (union is then trivially full).
+     * Collects non-empty shapes. A full block cannot absorb shapes outside its bounds.
      */
-    private fun filterNonEmptyShapes(voxelShapes: Array<out VoxelShape>): Array<out VoxelShape>? {
+    private fun filterNonEmptyShapes(voxelShapes: Array<out VoxelShape>): Array<out VoxelShape> {
         var nonEmptyCount = 0
         for (shape in voxelShapes) {
-            if (shape === Shapes.block()) return null
             if (!shape.isEmpty) nonEmptyCount++
         }
         if (nonEmptyCount == 0) return EMPTY_SHAPE_ARRAY

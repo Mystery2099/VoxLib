@@ -1,12 +1,10 @@
 package com.github.mystery2099.voxlib.debug
 
 import net.minecraft.client.renderer.RenderType
-import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.LevelRenderer
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.core.BlockPos
-import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.shapes.VoxelShape
 import java.awt.Color
 
@@ -28,7 +26,7 @@ object VoxelShapeDebug {
      * @param pos The position at which to render the shape.
      * @param color The color to use for rendering (default is red).
      * @param alpha The alpha value for transparency (0.0-1.0, default is 0.4).
-     * @param lineWidth The width of the lines (default is 2.0).
+     * @param lineWidth Unused; retained for compatibility. RenderType.lines controls line width.
      */
     fun renderShape(
         matrices: PoseStack,
@@ -44,45 +42,19 @@ object VoxelShapeDebug {
         val offsetY = pos.y.toDouble()
         val offsetZ = pos.z.toDouble()
 
-        // Draw each box in the shape
-        shape.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
-            val box = AABB(
-                minX + offsetX, minY + offsetY, minZ + offsetZ,
-                maxX + offsetX, maxY + offsetY, maxZ + offsetZ
-            )
-            drawBox(matrices, vertexConsumer, box, color, alpha, lineWidth)
-        }
-    }
-
-    /**
-     * Draws a box with the specified color and alpha.
-     *
-     * @param matrices The PoseStack to use for rendering.
-     * @param vertexConsumer The VertexConsumer to use for rendering.
-     * @param box The AABB to render.
-     * @param color The color to use for rendering.
-     * @param alpha The alpha value for transparency.
-     * @param lineWidth The width of the lines (unused, kept for API compatibility).
-     */
-    private fun drawBox(
-        matrices: PoseStack,
-        vertexConsumer: VertexConsumer,
-        box: AABB,
-        color: Color,
-        alpha: Float,
-        lineWidth: Float
-    ) {
         val red = color.red / 255.0f
         val green = color.green / 255.0f
         val blue = color.blue / 255.0f
 
-        LevelRenderer.renderLineBox(
-            matrices,
-            vertexConsumer,
-            box.minX, box.minY, box.minZ,
-            box.maxX, box.maxY, box.maxZ,
-            red, green, blue, alpha
-        )
+        // Preserve box decomposition and a uniform color without allocating AABBs.
+        shape.forAllBoxes { minX, minY, minZ, maxX, maxY, maxZ ->
+            LevelRenderer.renderLineBox(
+                matrices, vertexConsumer,
+                minX + offsetX, minY + offsetY, minZ + offsetZ,
+                maxX + offsetX, maxY + offsetY, maxZ + offsetZ,
+                red, green, blue, alpha
+            )
+        }
     }
 
     /**

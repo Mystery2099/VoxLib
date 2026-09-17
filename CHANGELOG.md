@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Reused vanilla bounding-box helpers and removed temporary boxes from debug rendering
+- Deprecated the misleading `and` union alias in favor of `+`, preserving its existing behavior and JVM method
+- Fixed unions with full cubes discarding geometry outside the block bounds
+
 - Updated Fabric Loader to 0.19.5, Fabric Language Kotlin to 1.14.1, and Kotlin to 2.4.20
 - Updated Loom to 1.18.2 and the build daemon to Java 25; the mod still targets Java 21
 - Updated CI checkout, Java setup, and artifact upload actions to their latest release lines
