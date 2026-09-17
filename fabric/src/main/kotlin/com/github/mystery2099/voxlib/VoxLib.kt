@@ -16,12 +16,12 @@ object VoxLib : ModInitializer {
     /**
      * The current version of VoxLib.
      */
-    const val VERSION = "1.6.0+1.19.4"
+    const val VERSION = "1.6.1+1.20.1"
 
     /**
      * The Minecraft version this mod is built for.
      */
-    private const val MINECRAFT_VERSION = "1.19.4"
+    private const val MINECRAFT_VERSION = "1.20.1"
 
 	override fun onInitialize() {
         logger.info("Initializing VoxLib v$VERSION for Minecraft $MINECRAFT_VERSION")

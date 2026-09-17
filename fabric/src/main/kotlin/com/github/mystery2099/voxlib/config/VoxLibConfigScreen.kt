@@ -4,7 +4,7 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.widget.ButtonWidget
-import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Text
 import kotlin.math.roundToInt
 
@@ -103,16 +103,17 @@ internal class VoxLibConfigScreen(private val parent: Screen) : Screen(Text.lite
     private fun alphaText(): Text =
         Text.literal("Alpha: ${(config.debugShapeAlpha * 100).roundToInt()}%")
 
-    override fun render(matrices: MatrixStack, mouseX: Int, mouseY: Int, delta: Float) {
-        renderBackground(matrices)
-        textRenderer.draw(
-            matrices,
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+        renderBackground(context)
+        context.drawText(
+            textRenderer,
             title,
-            (width - textRenderer.getWidth(title)) / 2.0f,
-            20.0f,
-            0xFFFFFF
+            (width - textRenderer.getWidth(title)) / 2,
+            20,
+            0xFFFFFF,
+            false
         )
-        super.render(matrices, mouseX, mouseY, delta)
+        super.render(context, mouseX, mouseY, delta)
     }
 
     override fun close() {

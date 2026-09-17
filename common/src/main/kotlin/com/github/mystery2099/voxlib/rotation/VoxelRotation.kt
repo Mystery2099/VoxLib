@@ -1,6 +1,6 @@
 package com.github.mystery2099.voxlib.rotation
 
-import com.github.mystery2099.voxlib.optimization.Minecraft1194ShapeOps
+import com.github.mystery2099.voxlib.optimization.Minecraft1201ShapeOps
 import com.github.mystery2099.voxlib.optimization.ShapeCache
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
@@ -127,7 +127,7 @@ object VoxelRotation {
         if (shape === VoxelShapes.fullCube()) return VoxelShapes.fullCube()
 
         return ShapeCache.getOrComputeTransformation(shape, transformation) {
-            Minecraft1194ShapeOps.transformBoxes(shape, transformation)
+            Minecraft1201ShapeOps.transformBoxes(shape, transformation)
         }
     }
 }

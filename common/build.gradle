@@ -13,6 +13,15 @@ loom {
 	}
 }
 
+// Loom creates these tasks even for this library, which cannot launch a game.
+tasks.named('runClient') {
+	enabled = false
+}
+
+tasks.named('runServer') {
+	enabled = false
+}
+
 tasks.named('remapJar') {
 	enabled = false
 }

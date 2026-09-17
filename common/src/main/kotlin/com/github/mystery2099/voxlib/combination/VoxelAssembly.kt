@@ -2,7 +2,7 @@ package com.github.mystery2099.voxlib.combination
 
 import com.github.mystery2099.voxlib.optimization.ShapeCache
 import com.github.mystery2099.voxlib.optimization.ShapeSimplifier
-import com.github.mystery2099.voxlib.optimization.Minecraft1194ShapeOps
+import com.github.mystery2099.voxlib.optimization.Minecraft1201ShapeOps
 import net.minecraft.util.function.BooleanBiFunction
 import net.minecraft.util.shape.VoxelShape
 import net.minecraft.util.shape.VoxelShapes
@@ -156,10 +156,10 @@ object VoxelAssembly {
     private fun unionMany(nonEmptyShapes: Array<out VoxelShape>): VoxelShape {
         val count = nonEmptyShapes.size
         if (count > MAX_CACHED_UNION_SHAPES) {
-            return Minecraft1194ShapeOps.union(nonEmptyShapes, count)
+            return Minecraft1201ShapeOps.union(nonEmptyShapes, count)
         }
         return ShapeCache.getOrComputeUnion(nonEmptyShapes, count) {
-            Minecraft1194ShapeOps.union(nonEmptyShapes, count)
+            Minecraft1201ShapeOps.union(nonEmptyShapes, count)
         }
     }
 

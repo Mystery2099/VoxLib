@@ -10,7 +10,7 @@ import net.minecraft.util.shape.VoxelShapes
  * Keeping vanilla calls here makes future ports easier without exposing a
  * version abstraction to callers.
  */
-internal object Minecraft1194ShapeOps {
+internal object Minecraft1201ShapeOps {
     fun union(shapes: Array<out VoxelShape>, size: Int = shapes.size): VoxelShape =
         unionRange(shapes, 0, size) { it }
 
