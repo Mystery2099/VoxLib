@@ -21,6 +21,28 @@ tasks.named('remapSourcesJar') {
 	enabled = false
 }
 
+sourceSets {
+	smoke
+}
+
+def commonJar = tasks.named('jar').flatMap { it.archiveFile }
+def verifyCommonJar = tasks.register('verifyCommonJar', JavaExec) {
+	group = 'verification'
+	description = 'Checks established JVM methods and common class loading without client or Fabric access.'
+	classpath = sourceSets.smoke.output
+	mainClass = 'com.github.mystery2099.voxlib.smoke.CommonJarSmokeCheck'
+	javaLauncher = javaToolchains.launcherFor(java.toolchain)
+	inputs.file(commonJar)
+	inputs.files(configurations.runtimeClasspath)
+	doFirst {
+		args = [commonJar.get().asFile.absolutePath, configurations.runtimeClasspath.asPath]
+	}
+}
+
+tasks.named('check') {
+	dependsOn verifyCommonJar
+}
+
 jmh {
 	jmhVersion = project.jmh_version
 	benchmarkMode = ['avgt']

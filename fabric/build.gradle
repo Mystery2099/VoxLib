@@ -72,6 +72,7 @@ def modJar = tasks.named('remapJar').flatMap { it.archiveFile }
 def verifyModJar = tasks.register('verifyModJar') {
 	group = 'verification'
 	description = 'Checks packaged APIs, shared assets, and common client/loader isolation.'
+	dependsOn commonProject.tasks.named('verifyCommonJar')
 	inputs.files(commonJar, modJar)
 	doLast {
 		new java.util.zip.ZipFile(modJar.get().asFile).withCloseable { mod ->
