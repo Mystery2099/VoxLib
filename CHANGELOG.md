@@ -33,8 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added a NeoForge build with bundled Kotlin and Caffeine
 - Added NeoForge config-screen and targeted shape-highlight integration
-- Added a Forge 1.20.1 build with bundled Kotlin and Caffeine
-- Added Forge config-screen and targeted shape-highlight integration
 
 ### Changed
 
@@ -43,6 +41,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Mod Menu to 10.0.0 and raised the Java requirement to 21
 - Updated the wrapper to Gradle 9.7.1 and the build daemon to Java 21 while retaining Java 17 mod compatibility
 - Replaced ForgeGradle with ModDevGradle's legacy Forge plugin for Gradle 9 support
+
+## [1.6.1+1.20.1] - 2026-09-17
+
+### Added
+
+- Added a Forge 1.20.1 build with bundled Kotlin and Caffeine
+- Added Forge config-screen and targeted shape-highlight integration
+
+### Changed
 
 - Shared client configuration and debug rendering between Fabric and Forge
 - Switched development sources to Mojang mappings for both loaders
@@ -185,7 +192,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic mod structure
 
 [Unreleased]: https://github.com/Mystery2099/VoxLib/compare/v1.7.0%2B1.20.6...HEAD
-[1.7.0]: https://github.com/Mystery2099/VoxLib/compare/v1.6.1%2B1.19.4...v1.7.0%2B1.20.6
+[1.7.0]: https://github.com/Mystery2099/VoxLib/compare/v1.6.1%2B1.20.1...v1.7.0%2B1.20.6
+[1.6.1+1.20.1]: https://github.com/Mystery2099/VoxLib/compare/v1.6.1%2B1.19.4...v1.6.1%2B1.20.1
 [1.6.1]: https://github.com/Mystery2099/VoxLib/compare/v1.6.0%2B1.19.4...v1.6.1%2B1.19.4
 [1.6.0]: https://github.com/Mystery2099/VoxLib/compare/v1.4.0%2B1.19.4...v1.6.0%2B1.19.4
 [1.4.0]: https://github.com/Mystery2099/VoxLib/compare/v1.2.0...v1.4.0%2B1.19.4
