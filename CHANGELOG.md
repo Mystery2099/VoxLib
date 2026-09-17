@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added loader suffixes to distributable filenames; kept Fabric Maven coordinates and added `voxlib-forge`
 
 - Ported the Fabric mod and common library to Minecraft 1.20.1
-- Updated Yarn mappings, Fabric API, and Mod Menu for 1.20.1
+- Updated Fabric API and Mod Menu for 1.20.1
 - Migrated the settings screen to Minecraft's DrawContext rendering API
 
 ## [1.6.1] - 2026-08-01
