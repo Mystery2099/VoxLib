@@ -1,27 +1,47 @@
 # VoxLib
 
-A Minecraft Fabric and NeoForge library mod that provides utilities for manipulating, creating, and rotating voxel shapes in your code!
+A Fabric and NeoForge library mod for Minecraft that provides Kotlin utilities for creating, combining, rotating, simplifying, and debugging `VoxelShape`s.
 
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.21.1-green)
-![Mod Loader](https://img.shields.io/badge/Mod%20Loaders-Fabric%20%2B%20NeoForge-blue)
-![Language](https://img.shields.io/badge/Language-Kotlin-purple)
+[![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-green)](https://modrinth.com/mod/voxlib/versions)
+[![Fabric and NeoForge](https://img.shields.io/badge/Loaders-Fabric%20%2B%20NeoForge-blue)](https://github.com/Mystery2099/VoxLib/wiki/Installation)
+[![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple)](https://github.com/Mystery2099/VoxLib/wiki)
+[![Documentation](https://img.shields.io/badge/Docs-GitHub%20Wiki-black)](https://github.com/Mystery2099/VoxLib/wiki)
 
-## Features
+VoxLib wraps Minecraft's shape API in small Kotlin extensions. It shortens block shape code and delegates the geometry to vanilla `VoxelShape` operations.
 
-- **Create** voxel shapes with intuitive syntax
-- **Combine** shapes using operator overloading (`+`) and conditional assembly
-- **Transform** shapes with rotation and flipping utilities
-- **Simplify** your block collision and outline code
-- **Reuse** repeated transformations with bounded caching and optionally create approximate, lower-detail outline shapes
-- **Debug** shapes with targeted outline and collision overlays
+## What it does
 
-## Getting Started
+- Creates cuboids with block-model coordinates from 0 to 16.
+- Combines shapes with `+`, unions, Boolean operations, and conditional assembly.
+- Rotates and flips directional shapes.
+- Provides common slabs, pillars, tables, chairs, fences, and stairs.
+- Caches repeated transformations and unions with bounded caches.
+- Builds approximate, lower-detail outline shapes when exact geometry is unnecessary.
+- Draws targeted outline and collision overlays during development.
 
-### Installation
+## Quick example
 
-#### Modrinth Maven (Recommended)
+```kotlin
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.createCuboidShape
+import com.github.mystery2099.voxlib.combination.VoxelAssembly.plus
+import com.github.mystery2099.voxlib.rotation.VoxelRotation.rotateLeft
 
-Every VoxLib release uploaded to Modrinth is automatically available through its Maven repository. Add the following to your `build.gradle`:
+val table = createCuboidShape(0, 15, 0, 16, 16, 16) +
+    createCuboidShape(1, 0, 1, 3, 15, 3) +
+    createCuboidShape(13, 0, 1, 15, 15, 3) +
+    createCuboidShape(1, 0, 13, 3, 15, 15) +
+    createCuboidShape(13, 0, 13, 15, 15, 15)
+
+val tableFacingWest = table.rotateLeft()
+```
+
+Keep fixed shapes in a top-level property, companion object, or static field so Minecraft does not rebuild them on every shape query.
+
+Follow the [getting started guide](https://github.com/Mystery2099/VoxLib/wiki/Getting-Started) to add a shape to a block. Java users should read [Using VoxLib from Java](https://github.com/Mystery2099/VoxLib/wiki/Using-VoxLib-from-Java) for the JVM syntax used to call Kotlin `object` APIs.
+
+## Installation
+
+Choose a release that matches your Minecraft version from the [version matrix](https://github.com/Mystery2099/VoxLib/wiki#version-matrix). For Fabric, the current release is available from Modrinth Maven:
 
 ```gradle
 repositories {
