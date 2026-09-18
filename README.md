@@ -7,9 +7,9 @@ A Fabric and NeoForge library mod for Minecraft that provides Kotlin utilities f
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple)](https://github.com/Mystery2099/VoxLib/wiki)
 [![Documentation](https://img.shields.io/badge/Docs-GitHub%20Wiki-black)](https://github.com/Mystery2099/VoxLib/wiki)
 
-VoxLib wraps Minecraft's shape API in small Kotlin extensions. It shortens block shape code and delegates the geometry to vanilla `VoxelShape` operations.
+VoxLib takes some of the repetitive work out of Minecraft's shape API. The helpers keep block shape code shorter and easier to read, while vanilla `VoxelShape` operations still handle the geometry underneath.
 
-## What it does
+## What does it actually do?
 
 - Creates cuboids with block-model coordinates from 0 to 16.
 - Combines shapes with `+`, unions, Boolean operations, and conditional assembly.
@@ -124,7 +124,9 @@ VoxLib uses Mojang mappings for Minecraft 1.21.1. The common module's JAR is a d
 
 ## Support
 
-VoxLib is free. If you would like to support its development, you can [buy me a coffee](https://buymeacoffee.com/mystery2099).
+VoxLib is free, and it always will be. Nobody owes me anything for it.
+
+If you still want to support my projects, you can [buy me a coffee](https://buymeacoffee.com/mystery2099). No pressure at all.
 
 ## License
 
