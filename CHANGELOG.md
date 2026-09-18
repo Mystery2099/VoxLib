@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nothing yet.
 
+## [1.8.0+1.21.1] - 2026-09-17
+
 ### Changed
 
 - Reused vanilla bounding-box helpers and removed temporary boxes from debug rendering
@@ -27,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated loader compatibility metadata and the resource pack format for 1.21.1
 - Adapted NeoForge config-screen registration to its 1.21.1 API
 
-## [1.7.0] - 2026-09-17
+## [1.7.0+1.20.6] - 2026-09-17
 
 ### Added
 
@@ -39,8 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ported the mod to Minecraft 1.20.6, raising the mod to Java 21 and Fabric API 0.99.4
 - Replaced the Forge module with a NeoForge module published as `voxlib-neoforge` via ModDevGradle
 - Updated Mod Menu to 10.0.0 and raised the Java requirement to 21
-- Updated the wrapper to Gradle 9.7.1 and the build daemon to Java 21 while retaining Java 17 mod compatibility
-- Replaced ForgeGradle with ModDevGradle's legacy Forge plugin for Gradle 9 support
 
 ## [1.6.1+1.20.1] - 2026-09-17
 
@@ -57,9 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Ported the Fabric mod and common library to Minecraft 1.20.1
 - Updated Fabric API and Mod Menu for 1.20.1
-- Migrated the settings screen to Minecraft's DrawContext rendering API
+- Migrated the settings screen to Minecraft's `GuiGraphics` rendering API
 
-## [1.6.1] - 2026-08-01
+## [1.6.1+1.19.4] - 2026-08-01
 
 ### Added
 
@@ -76,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduced 256-box simplifier allocation from about 10.93 MB/op to 1.88 MB/op with a compact deterministic queue
 - Centralized Minecraft 1.19.4 union mechanics for easier future ports
 
-## [1.6.0] - 2026-07-30
+## [1.6.0+1.19.4] - 2026-07-30
 
 ### Added
 
@@ -105,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handled empty bounding-box simplification and invalid box limits safely
 - Replaced placeholder tests with explicit skips and real asymmetric rotation coverage
 
-## [1.4.0] - 2025-12-30
+## [1.4.0+1.19.4] - 2025-12-30
 
 ### Added
 
@@ -117,7 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated dependencies for Minecraft 1.19.4
 - Updated Fabric Language Kotlin to 1.13.8+kotlin.2.3.0
 
-## [1.3.0] - 2025-12-30
+## [1.3.0+1.19.4] - 2025-12-30
 
 ### Changed
 
@@ -126,7 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved type safety in VoxLib APIs
 - Enhanced documentation
 
-## [1.2.0] - 2023-05-15
+## [1.2.0+1.19.4] - 2025-04-11
 
 ### Added
 
@@ -175,28 +175,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Fabric Language Kotlin to 1.13.2+kotlin.2.1.20
 - Specified minimum Fabric API version as 0.87.2+1.19.4
 
-## [1.1.0] - 2021-06-10
+## [1.1+1.19.4] - 2024-03-15
 
-### Added
+### Changed
 
-- Initial release with basic shape manipulation utilities
-- VoxelAssembly for creating and combining shapes
-- VoxelRotation for transforming shapes
-- Basic GitHub Actions setup
+- Updated Fabric Loader from 0.14.24 to 0.15.7
+- Updated Fabric Language Kotlin from 1.10.14+kotlin.1.9.20 to 1.10.19+kotlin.1.9.23
+- Updated Kotlin from 1.9.20 to 1.9.23
 
-## [1.0.0] - 2021-05-25
+## [1.0.0+1.19.4] - 2023-12-02
 
 ### Added
 
 - Initial project setup
 - Basic mod structure
 
-[Unreleased]: https://github.com/Mystery2099/VoxLib/compare/v1.7.0%2B1.20.6...HEAD
-[1.7.0]: https://github.com/Mystery2099/VoxLib/compare/v1.6.1%2B1.20.1...v1.7.0%2B1.20.6
+[Unreleased]: https://github.com/Mystery2099/VoxLib/compare/v1.8.0%2B1.21.1...HEAD
+[1.8.0+1.21.1]: https://github.com/Mystery2099/VoxLib/compare/v1.7.0%2B1.20.6...v1.8.0%2B1.21.1
+[1.7.0+1.20.6]: https://github.com/Mystery2099/VoxLib/compare/v1.6.1%2B1.20.1...v1.7.0%2B1.20.6
 [1.6.1+1.20.1]: https://github.com/Mystery2099/VoxLib/compare/v1.6.1%2B1.19.4...v1.6.1%2B1.20.1
-[1.6.1]: https://github.com/Mystery2099/VoxLib/compare/v1.6.0%2B1.19.4...v1.6.1%2B1.19.4
-[1.6.0]: https://github.com/Mystery2099/VoxLib/compare/v1.4.0%2B1.19.4...v1.6.0%2B1.19.4
-[1.4.0]: https://github.com/Mystery2099/VoxLib/compare/v1.2.0...v1.4.0%2B1.19.4
-[1.2.0]: https://github.com/Mystery2099/VoxLib/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/Mystery2099/VoxLib/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/Mystery2099/VoxLib/releases/tag/v1.0.0%2B1.19.4
+[1.6.1+1.19.4]: https://github.com/Mystery2099/VoxLib/compare/v1.6.0%2B1.19.4...v1.6.1%2B1.19.4
+[1.6.0+1.19.4]: https://github.com/Mystery2099/VoxLib/compare/v1.4.0%2B1.19.4...v1.6.0%2B1.19.4
+[1.4.0+1.19.4]: https://github.com/Mystery2099/VoxLib/compare/v1.3.0%2B1.19.4...v1.4.0%2B1.19.4
+[1.3.0+1.19.4]: https://github.com/Mystery2099/VoxLib/compare/v1.2.0...v1.3.0%2B1.19.4
+[1.2.0+1.19.4]: https://github.com/Mystery2099/VoxLib/compare/v1.1%2B1.19.4...v1.2.0
+[1.1+1.19.4]: https://github.com/Mystery2099/VoxLib/compare/v1.0.0%2B1.19.4...v1.1%2B1.19.4
+[1.0.0+1.19.4]: https://github.com/Mystery2099/VoxLib/releases/tag/v1.0.0%2B1.19.4
